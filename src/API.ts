@@ -4,6 +4,7 @@ export default class API {
     apiConstants: ApiConstants;
 
     constructor(apiConstants: ApiConstants) {
+        if (!apiConstants) throw new Error('Error on API constructor: apiConstants not defined.');
         this.apiConstants = apiConstants;
     }
 
