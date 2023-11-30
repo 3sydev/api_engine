@@ -1,4 +1,4 @@
-import { ApiConstants, ApiParameters, ApiTypes, Endpoint, QueryParameters, RequestInitParams, UseFetch } from './types';
+import { ApiConstants, ApiParameters, ApiTypes, Endpoint, PathQueryParameters, UseFetch } from './types';
 import fetch, { RequestInit } from 'node-fetch';
 
 export default class API {
@@ -37,7 +37,7 @@ export default class API {
     call = (type: string, parameters?: ApiParameters): Promise<object | undefined | unknown> => {
         return new Promise(async (resolve, reject) => {
             try {
-                const defaultParameters = { queryParameters: [{ name: '', value: '' }], headers: {}, body: {} };
+                const defaultParameters: ApiParameters = { pathQueryParameters: [{ name: '', value: '' }], headers: {}, body: {} };
                 const requestUrl: string = this.generateUrl(type, parameters || defaultParameters);
 
                 const requestInit: RequestInit = this.generateRequest(type);
@@ -62,11 +62,13 @@ export default class API {
         });
     };
 
-    private setQueryParameters = (url: string, queryParameters: QueryParameters): string => {
+    private setQueryParameters = (url: string, queryParameters: PathQueryParameters | undefined): string => {
+        if (!queryParameters) return url;
+
         let newUrl = url;
 
         for (let parameter of queryParameters) {
-            newUrl?.replace(`{${parameter.name}}`, encodeURIComponent(parameter.value));
+            newUrl = newUrl?.replace(`{${parameter.name}}`, encodeURIComponent(parameter.value));
         }
 
         return newUrl;
@@ -74,7 +76,7 @@ export default class API {
 
     private generateUrl = (type: string, parameters: ApiParameters): string => {
         const url = this.apiConstants.baseUrl + this.getApi(type).path;
-        return this.setQueryParameters(url, parameters.queryParameters);
+        return this.setQueryParameters(url, parameters?.pathQueryParameters);
     };
 
     private generateRequest = (type: string): RequestInit => {

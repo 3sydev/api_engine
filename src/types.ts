@@ -20,17 +20,17 @@ export type ApiConstants = {
     endpoints: Endpoints;
 };
 
-type QueryParameter = {
+type Parameter = {
     name: string;
     value: string;
 };
 
-export type QueryParameters = QueryParameter[];
+export type PathQueryParameters = Parameter[];
 
 export type ApiParameters = {
-    queryParameters: QueryParameters;
-    headers: object;
-    body: object;
+    pathQueryParameters?: PathQueryParameters;
+    headers?: object;
+    body?: object;
 };
 
 export type RequestInitParams = {
