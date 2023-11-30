@@ -28,9 +28,10 @@ describe('TypeScript tests', () => {
             const apiTypes = api.getApiTypes();
 
             try {
-                await api.call(apiTypes.getResourcesKO);
+                const res = await api.call(apiTypes.getResourcesKO);
+                expect(res).toBeUndefined();
             } catch (error) {
-                expect(error).toStrictEqual(new Error('Status code !== 200: 404'));
+                expect(error).toStrictEqual(new Error('Status code !== 2xx: 404'));
             }
         });
     });
@@ -60,9 +61,10 @@ describe('TypeScript tests', () => {
             };
 
             try {
-                await api.call(apiTypes.getResource, parameters);
+                const res = await api.call(apiTypes.getResource, parameters);
+                expect(res).toBeUndefined();
             } catch (error) {
-                expect(error).toStrictEqual(new Error('Status code !== 200: 404'));
+                expect(error).toStrictEqual(new Error('Status code !== 2xx: 404'));
             }
         });
 
@@ -86,13 +88,14 @@ describe('TypeScript tests', () => {
             const api = new API(apiConstantsTs);
             const apiTypes = api.getApiTypes();
             const parameters: ApiParameters = {
-                pathQueryParameters: [{ name: 'id', value: 'sdvfevdc' }],
+                pathQueryParameters: [{ name: 'sdcsdvsdv', value: 'sdvfevdc' }],
             };
 
             try {
-                await api.call(apiTypes.getUserResources, parameters);
+                const res = await api.call(apiTypes.getUserResourcesKO, parameters);
+                expect(res).toBeUndefined();
             } catch (error) {
-                expect(error).toStrictEqual(new Error('Status code !== 200: 404'));
+                expect(error).toStrictEqual(new Error('Status code !== 2xx: 404'));
             }
         });
 
@@ -126,9 +129,37 @@ describe('TypeScript tests', () => {
             };
 
             try {
-                await api.call(apiTypes.getUserResourcesWithCustomRoute, parameters);
+                const res = await api.call(apiTypes.getUserResourcesWithCustomRoute, parameters);
+                expect(res).toBeUndefined();
             } catch (error) {
-                expect(error).toStrictEqual(new Error('Status code !== 200: 404'));
+                expect(error).toStrictEqual(new Error('Status code !== 2xx: 404'));
+            }
+        });
+    });
+
+    describe('With headers and body REST API calls', () => {
+        test('Static headers and body call OK', async () => {
+            const api = new API(apiConstantsTs);
+            const apiTypes = api.getApiTypes();
+
+            try {
+                const res = await api.call(apiTypes.createResource);
+
+                expect(res).toBeTruthy();
+            } catch (error) {
+                expect(error).toBeUndefined();
+            }
+        });
+
+        test('Static headers and body call KO', async () => {
+            const api = new API(apiConstantsTs);
+            const apiTypes = api.getApiTypes();
+
+            try {
+                const res = await api.call(apiTypes.createResourceKO);
+                expect(res).toBeUndefined();
+            } catch (error) {
+                expect(error).toStrictEqual(new Error('Status code !== 2xx: 404'));
             }
         });
     });

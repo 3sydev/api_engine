@@ -35,10 +35,50 @@ const apiConstantsTs: ApiConstantsType = {
             retry: 0,
             retryCondition: [],
         },
+        getUserResourcesKO: {
+            path: '/poss?efce={id}',
+            request: {
+                method: 'GET',
+            },
+            retry: 0,
+            retryCondition: [],
+        },
         getUserResourcesWithCustomRoute: {
             path: '/{route}?userId={id}',
             request: {
                 method: 'GET',
+            },
+            retry: 0,
+            retryCondition: [],
+        },
+        createResource: {
+            path: '/posts',
+            request: {
+                method: 'POST',
+                headers: {
+                    'Content-type': 'application/json; charset=UTF-8',
+                },
+                body: JSON.stringify({
+                    title: 'foo',
+                    body: 'bar',
+                    userId: 1,
+                }),
+            },
+            retry: 0,
+            retryCondition: [],
+        },
+        createResourceKO: {
+            path: '/p',
+            request: {
+                method: 'POST',
+                headers: {
+                    'Content-sdcjndsc': 'application/json; charset=UTF-8',
+                },
+                body: JSON.stringify({
+                    title: 'foo',
+                    body: 'bar',
+                    userId: 1,
+                }),
             },
             retry: 0,
             retryCondition: [],
