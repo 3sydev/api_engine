@@ -1,13 +1,16 @@
 import API from './src/API';
+import { ApiConstants, ApiParameters, ApiType } from './src/types';
 
 export default class APIInterface {
-    constructor(apiConstants) {
+    apiConstants: ApiConstants;
+    api: API;
+
+    constructor(apiConstants: ApiConstants) {
         this.apiConstants = apiConstants;
+        this.api = new API(this.apiConstants);
     }
 
-    api = new API(this.apiConstants);
-
-    call = (type, parameters) => {
+    call = (type: ApiType, parameters: ApiParameters) => {
         return new Promise(async (resolve, reject) => {
             try {
                 const res = await this.api.call(type, parameters);
