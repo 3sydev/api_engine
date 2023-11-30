@@ -41,5 +41,6 @@ export type RequestInitParams = {
 
 export type UseFetch = {
     statusCode: number;
+    isOk: boolean;
     responseJson: object | undefined | unknown;
 };

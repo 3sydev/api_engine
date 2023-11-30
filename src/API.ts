@@ -24,6 +24,7 @@ export default class API {
 
                 resolve({
                     statusCode: response.status,
+                    isOk: response.ok,
                     responseJson,
                 });
             } catch (error) {
@@ -49,10 +50,10 @@ export default class API {
                 let result: object | undefined | unknown;
                 if (retryCondition) {
                     result = await this.manageRetry(type, useFetchCall);
-                } else if (useFetchResponse?.statusCode === 200) {
+                } else if (useFetchResponse?.isOk) {
                     result = useFetchResponse?.responseJson;
                 } else {
-                    reject(new Error('Status code !== 200: ' + useFetchResponse?.statusCode));
+                    reject(new Error('Status code !== 2xx: ' + useFetchResponse?.statusCode));
                 }
 
                 resolve(result);
@@ -97,6 +98,7 @@ export default class API {
                 let resolved: boolean = false;
                 let result: UseFetch = {
                     statusCode: 0,
+                    isOk: false,
                     responseJson: undefined,
                 };
                 const numberOfRetry = this.getApi(type)?.retry;
