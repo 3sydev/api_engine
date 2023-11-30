@@ -1,9 +1,11 @@
-import { ApiConstants, ApiParameters, ApiType } from './src/types';
+import { ApiConstants, ApiParameters, ApiTypes } from './src/types';
 
 declare namespace API {
     const apiConstants: ApiConstants;
 
-    function call(type: ApiType, parameters: ApiParameters): Promise<object | undefined>;
+    function getApiTypes(): ApiTypes;
+
+    function call(type: ApiTypes, parameters?: ApiParameters): Promise<object | undefined>;
 }
 
 export default API;
