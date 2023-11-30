@@ -27,7 +27,6 @@ export default class API {
                     responseJson,
                 });
             } catch (error) {
-                console.error(error);
                 reject(error);
             }
         });

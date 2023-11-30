@@ -21,7 +21,6 @@ export default class APIInterface {
                 const res = await this.api.call(type, parameters);
                 resolve(res);
             } catch (error) {
-                console.error(error);
                 reject(error);
             }
         });
