@@ -23,5 +23,8 @@
   "bugs": {
     "url": "https://github.com/3sydev/api_engine/issues"
   },
-  "homepage": "https://github.com/3sydev/api_engine#readme"
+  "homepage": "https://github.com/3sydev/api_engine#readme",
+  "dependencies": {
+    "fetch": "^1.1.0"
+  }
 }
