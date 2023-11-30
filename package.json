@@ -1,0 +1,27 @@
+{
+  "name": "api_engine",
+  "version": "0.0.1",
+  "description": "REST API engine to simplify REST API integration in NodeJS applications.",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/3sydev/api_engine.git"
+  },
+  "keywords": [
+    "node.js",
+    "react",
+    "react-native",
+    "api",
+    "rest",
+    "fetch"
+  ],
+  "author": "3SY srl",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/3sydev/api_engine/issues"
+  },
+  "homepage": "https://github.com/3sydev/api_engine#readme"
+}
