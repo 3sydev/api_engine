@@ -40,7 +40,7 @@ export default class API {
                 const defaultParameters: ApiParameters = { pathQueryParameters: [{ name: '', value: '' }], headers: {}, body: {} };
                 const requestUrl: string = this.generateUrl(type, parameters || defaultParameters);
 
-                const requestInit: RequestInit = this.generateRequest(type);
+                const requestInit: RequestInit = this.generateRequest(type); //TODO: handle dinamic headers and body from ApiParameters
 
                 const useFetchCall = async () => await this.useFetch(requestUrl, requestInit);
                 const useFetchResponse = await useFetchCall();
