@@ -1,21 +1,18 @@
-export enum ApiType {
-    LogIn = 'logIn',
-    LogOut = 'logOut',
-}
+import { RequestInit } from 'node-fetch';
+
+export type ApiTypes = {
+    [key: string]: string;
+};
 
 export type Endpoint = {
-    type: ApiType;
     path: string;
-    method: string;
-    headers: HeadersInit;
-    body: object | null;
+    request: RequestInit;
     retry: number | 0;
     retryCondition: number[];
 };
 
 type Endpoints = {
-    logIn: Endpoint;
-    logOut: Endpoint;
+    [key: string]: Endpoint;
 };
 
 export type ApiConstants = {
@@ -44,5 +41,5 @@ export type RequestInitParams = {
 
 export type UseFetch = {
     statusCode: number;
-    responseJson: object | undefined;
+    responseJson: object | undefined | unknown;
 };

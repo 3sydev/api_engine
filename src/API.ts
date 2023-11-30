@@ -1,19 +1,22 @@
-import { ApiConstants, ApiParameters, ApiType, Endpoint, QueryParameters, RequestInitParams, UseFetch } from './types';
+import { ApiConstants, ApiParameters, ApiTypes, Endpoint, QueryParameters, RequestInitParams, UseFetch } from './types';
+import fetch, { RequestInit } from 'node-fetch';
 
 export default class API {
-    apiConstants: ApiConstants;
+    private apiConstants: ApiConstants;
+    private apiTypes: ApiTypes;
 
     constructor(apiConstants: ApiConstants) {
         if (!apiConstants) throw new Error('Error on API constructor: apiConstants not defined.');
         this.apiConstants = apiConstants;
+        this.apiTypes = Object.keys(this.apiConstants.endpoints)?.reduce((o, key) => ({ ...o, [key]: key }), {});
     }
 
-    private getApi = (type: ApiType): Endpoint | undefined => {
+    private getApi = (type: string): Endpoint => {
         const apis = this.apiConstants.endpoints;
         return apis[type];
     };
 
-    private useFetch = (requestUrl: string, requestInit: RequestInitParams): Promise<UseFetch> => {
+    private useFetch = (requestUrl: string, requestInit: RequestInit): Promise<UseFetch> => {
         return new Promise(async (resolve, reject) => {
             try {
                 const response = await fetch(requestUrl, requestInit);
@@ -30,24 +33,21 @@ export default class API {
         });
     };
 
-    call = (type: ApiType, parameters: ApiParameters): Promise<object | undefined> => {
+    getApiTypes = (): ApiTypes => this.apiTypes;
+
+    call = (type: string, parameters?: ApiParameters): Promise<object | undefined | unknown> => {
         return new Promise(async (resolve, reject) => {
             try {
-                const requestUrl: string = this.generateUrl(type, parameters);
-                const method: string | undefined = this.generateMethod(type);
-                const headers: HeadersInit | undefined = this.generateHeaders(type);
-                const body: object | null | undefined = this.generateBody(type);
+                const defaultParameters = { queryParameters: [{ name: '', value: '' }], headers: {}, body: {} };
+                const requestUrl: string = this.generateUrl(type, parameters || defaultParameters);
 
-                const requestInit = {
-                    method,
-                    headers,
-                    body: JSON.stringify(body),
-                };
+                const requestInit: RequestInit = this.generateRequest(type);
+
                 const useFetchCall = async () => await this.useFetch(requestUrl, requestInit);
                 const useFetchResponse = await useFetchCall();
                 const retryCondition: boolean = this.retryCondition(type, useFetchResponse.statusCode);
 
-                let result: object | undefined;
+                let result: object | undefined | unknown;
                 if (retryCondition) {
                     result = await this.manageRetry(type, useFetchCall);
                 } else if (useFetchResponse?.statusCode === 200) {
@@ -73,31 +73,24 @@ export default class API {
         return newUrl;
     };
 
-    private generateUrl = (type: ApiType, parameters: ApiParameters): string => {
-        const url = this.apiConstants.baseUrl + this.getApi(type);
+    private generateUrl = (type: string, parameters: ApiParameters): string => {
+        const url = this.apiConstants.baseUrl + this.getApi(type).path;
         return this.setQueryParameters(url, parameters.queryParameters);
     };
 
-    private generateMethod = (type: ApiType): string | undefined => {
-        return this.getApi(type)?.method;
+    private generateRequest = (type: string): RequestInit => {
+        const request = this.getApi(type).request;
+        return request;
     };
 
-    private generateHeaders = (type: ApiType): HeadersInit | undefined => {
-        return this.getApi(type)?.headers;
-    };
-
-    private generateBody = (type: ApiType): object | null | undefined => {
-        return this.getApi(type)?.body;
-    };
-
-    private retryCondition = (type: ApiType, statusCode: number): boolean => {
+    private retryCondition = (type: string, statusCode: number): boolean => {
         const conditionsStatus = this.getApi(type)?.retryCondition;
         const result = conditionsStatus?.some((status) => status === statusCode) || false;
 
         return result;
     };
 
-    private manageRetry = (type: ApiType, useFetchCall: Function): Promise<object | undefined> => {
+    private manageRetry = (type: string, useFetchCall: Function): Promise<object | undefined | unknown> => {
         return new Promise(async (resolve, reject) => {
             try {
                 let resolved: boolean = false;
