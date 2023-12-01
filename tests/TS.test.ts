@@ -162,5 +162,50 @@ describe('TypeScript tests', () => {
                 expect(error).toStrictEqual(new Error('Status code !== 2xx: 404'));
             }
         });
+
+        test('Dinamic headers and body call OK', async () => {
+            const api = new API(apiConstantsTs);
+            const apiTypes = api.getApiTypes();
+            const parameters: ApiParameters = {
+                pathQueryParameters: [
+                    { name: 'route', value: 'posts' },
+                    { name: 'id', value: '1' },
+                ],
+                headers: {
+                    Accept: 'application/json',
+                },
+                body: JSON.stringify({ title: 'foo' }),
+            };
+
+            try {
+                const res = await api.call(apiTypes.createResourceWithDinamicHeaderAndBody, parameters);
+
+                expect(res).toBeTruthy();
+            } catch (error) {
+                expect(error).toBeUndefined();
+            }
+        });
+
+        test('Dinamic headers and body call KO', async () => {
+            const api = new API(apiConstantsTs);
+            const apiTypes = api.getApiTypes();
+            const parameters: ApiParameters = {
+                pathQueryParameters: [
+                    { name: 'route', value: 'erfcekrnc' },
+                    { name: 'id', value: 'dfvnodiefc' },
+                ],
+                headers: {
+                    Accept: 'application/json',
+                },
+                body: JSON.stringify({ test: 'test' }),
+            };
+
+            try {
+                const res = await api.call(apiTypes.createResourceKO, parameters);
+                expect(res).toBeUndefined();
+            } catch (error) {
+                expect(error).toStrictEqual(new Error('Status code !== 2xx: 404'));
+            }
+        });
     });
 });

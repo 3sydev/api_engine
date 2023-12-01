@@ -83,6 +83,21 @@ const apiConstantsTs: ApiConstantsType = {
             retry: 0,
             retryCondition: [],
         },
+        createResourceWithDinamicHeaderAndBody: {
+            path: '/posts',
+            request: {
+                method: 'POST',
+                headers: {
+                    'Content-type': 'application/json; charset=UTF-8',
+                },
+                body: JSON.stringify({
+                    body: 'bar',
+                    userId: 1,
+                }),
+            },
+            retry: 0,
+            retryCondition: [],
+        },
     },
 };
 

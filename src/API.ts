@@ -1,5 +1,5 @@
 import { ApiConstants, ApiParameters, ApiTypes, Endpoint, PathQueryParameters, UseFetch } from './types';
-import fetch, { RequestInit } from 'node-fetch';
+import fetch, { BodyInit, RequestInit } from 'node-fetch';
 
 export default class API {
     private apiConstants: ApiConstants;
@@ -38,10 +38,10 @@ export default class API {
     call = (type: string, parameters?: ApiParameters): Promise<object | undefined | unknown> => {
         return new Promise(async (resolve, reject) => {
             try {
-                const defaultParameters: ApiParameters = { pathQueryParameters: [{ name: '', value: '' }], headers: {}, body: {} };
+                const defaultParameters: ApiParameters = { pathQueryParameters: [{ name: '', value: '' }], headers: {}, body: {} as BodyInit };
                 const requestUrl: string = this.generateUrl(type, parameters || defaultParameters);
 
-                const requestInit: RequestInit = this.generateRequest(type); //TODO: handle dinamic headers and body from ApiParameters
+                const requestInit: RequestInit = this.generateRequest(type, parameters);
 
                 const useFetchCall = async () => await this.useFetch(requestUrl, requestInit);
                 const useFetchResponse = await useFetchCall();
@@ -80,8 +80,19 @@ export default class API {
         return this.setQueryParameters(url, parameters?.pathQueryParameters);
     };
 
-    private generateRequest = (type: string): RequestInit => {
-        const request = this.getApi(type).request;
+    private generateRequest = (type: string, parameters?: ApiParameters): RequestInit => {
+        const { headers, body: _body } = parameters || { headers: {}, body: undefined };
+        const staticRequest = this.getApi(type).request;
+        const staticRequestBody = staticRequest?.body;
+
+        const body = _body ? JSON.stringify({ ...JSON.parse(staticRequestBody as string), ...JSON.parse(_body as string) } as BodyInit) : staticRequestBody;
+
+        const request = {
+            method: staticRequest.method,
+            headers: { ...staticRequest.headers, ...headers },
+            body,
+        };
+
         return request;
     };
 

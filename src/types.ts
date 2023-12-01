@@ -1,4 +1,4 @@
-import { RequestInit } from 'node-fetch';
+import { BodyInit, RequestInit } from 'node-fetch';
 
 export type ApiTypes = {
     [key: string]: string;
@@ -29,14 +29,8 @@ export type PathQueryParameters = Parameter[];
 
 export type ApiParameters = {
     pathQueryParameters?: PathQueryParameters;
-    headers?: object;
-    body?: object;
-};
-
-export type RequestInitParams = {
-    method: string | undefined;
-    headers: HeadersInit | undefined;
-    body: string;
+    headers?: HeadersInit;
+    body?: BodyInit;
 };
 
 export type UseFetch = {
