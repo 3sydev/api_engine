@@ -1,5 +1,5 @@
 import API from '../index';
-import { ApiParameters } from '../src/types';
+import { ApiParameters, CallRespose, Retries } from '../src/types';
 import apiConstantsTs from './mocks/mock_ts';
 
 describe('TypeScript tests', () => {
@@ -205,6 +205,34 @@ describe('TypeScript tests', () => {
                 expect(res).toBeUndefined();
             } catch (error) {
                 expect(error).toStrictEqual(new Error('Status code !== 2xx: 404'));
+            }
+        });
+    });
+
+    describe('With retries', () => {
+        test('Retry OK', async () => {
+            const api = new API(apiConstantsTs);
+            const apiTypes = api.getApiTypes();
+
+            try {
+                const res = await api.call(apiTypes.getResourcesWithRetryOK);
+
+                expect(res.retries).toEqual<CallRespose>(expect.objectContaining<Retries>({ quantity: 1, conditions: [200] }));
+            } catch (error) {
+                expect(error).toBeUndefined();
+            }
+        });
+
+        test('Retry KO', async () => {
+            const api = new API(apiConstantsTs);
+            const apiTypes = api.getApiTypes();
+
+            try {
+                const res = await api.call(apiTypes.getResourcesWithRetryKO);
+
+                expect(res.retries).toEqual<CallRespose>(expect.objectContaining<Retries>({ quantity: 3, conditions: [404, 404, 404] }));
+            } catch (error) {
+                expect(error).toBeUndefined();
             }
         });
     });

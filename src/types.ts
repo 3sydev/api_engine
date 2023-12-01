@@ -1,4 +1,4 @@
-import { BodyInit, RequestInit } from 'node-fetch';
+import { BodyInit, RequestInit, Response } from 'node-fetch';
 
 export type ApiTypes = {
     [key: string]: string;
@@ -37,4 +37,14 @@ export type UseFetch = {
     statusCode: number;
     isOk: boolean;
     responseJson: object | undefined | unknown;
+};
+
+export type Retries = {
+    quantity: number;
+    conditions: number[];
+};
+
+export type CallRespose = {
+    response: Response;
+    retries: Retries;
 };

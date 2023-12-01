@@ -1,5 +1,5 @@
-import { ApiConstants, ApiParameters, ApiTypes, Endpoint, PathQueryParameters, UseFetch } from './types';
-import fetch, { BodyInit, RequestInit } from 'node-fetch';
+import { ApiConstants, ApiParameters, ApiTypes, CallRespose, Endpoint, PathQueryParameters, UseFetch } from './types';
+import fetch, { BodyInit, RequestInit, Response } from 'node-fetch';
 
 export default class API {
     private apiConstants: ApiConstants;
@@ -16,17 +16,11 @@ export default class API {
         return apis[type];
     };
 
-    private useFetch = (requestUrl: string, requestInit: RequestInit): Promise<UseFetch> => {
+    private useFetch = (requestUrl: string, requestInit: RequestInit): Promise<Response> => {
         return new Promise(async (resolve, reject) => {
             try {
                 const response = await fetch(requestUrl, requestInit);
-                const responseJson = await response.json();
-
-                resolve({
-                    statusCode: response.status,
-                    isOk: response.ok,
-                    responseJson,
-                });
+                resolve(response);
             } catch (error) {
                 reject(error);
             }
@@ -35,7 +29,7 @@ export default class API {
 
     getApiTypes = (): ApiTypes => this.apiTypes;
 
-    call = (type: string, parameters?: ApiParameters): Promise<object | undefined | unknown> => {
+    call = (type: string, parameters?: ApiParameters): Promise<CallRespose> => {
         return new Promise(async (resolve, reject) => {
             try {
                 const defaultParameters: ApiParameters = { pathQueryParameters: [{ name: '', value: '' }], headers: {}, body: {} as BodyInit };
@@ -43,17 +37,17 @@ export default class API {
 
                 const requestInit: RequestInit = this.generateRequest(type, parameters);
 
-                const useFetchCall = async () => await this.useFetch(requestUrl, requestInit);
+                const useFetchCall = async (): Promise<Response> => await this.useFetch(requestUrl, requestInit);
                 const useFetchResponse = await useFetchCall();
-                const retryCondition: boolean = this.retryCondition(type, useFetchResponse.statusCode);
+                const retryCondition: boolean = this.retryCondition(type, useFetchResponse.status);
 
-                let result: object | undefined | unknown;
+                let result: CallRespose = { response: {} as Response, retries: { quantity: 0, conditions: [] } };
                 if (retryCondition) {
                     result = await this.manageRetry(type, useFetchCall);
-                } else if (useFetchResponse?.isOk) {
-                    result = useFetchResponse?.responseJson;
+                } else if (useFetchResponse.ok) {
+                    result = { response: useFetchResponse, retries: { quantity: 0, conditions: [] } };
                 } else {
-                    reject(new Error('Status code !== 2xx: ' + useFetchResponse?.statusCode));
+                    reject(new Error('Status code !== 2xx: ' + useFetchResponse.status));
                 }
 
                 resolve(result);
@@ -103,25 +97,33 @@ export default class API {
         return result;
     };
 
-    private manageRetry = (type: string, useFetchCall: Function): Promise<object | undefined | unknown> => {
+    private manageRetry = (type: string, useFetchCall: () => Promise<Response>): Promise<CallRespose> => {
         return new Promise(async (resolve, reject) => {
             try {
                 let resolved: boolean = false;
-                let result: UseFetch = {
-                    statusCode: 0,
-                    isOk: false,
-                    responseJson: undefined,
-                };
+                let result: CallRespose = { response: {} as Response, retries: { quantity: 0, conditions: [] } };
                 const numberOfRetry = this.getApi(type)?.retry;
 
-                for (let _ = 0; numberOfRetry; _++) {
+                let retriedTimes = 0;
+                let retriedConditions = [];
+
+                for (let i = 0; i < numberOfRetry; i++) {
                     if (!resolved) {
-                        result = await useFetchCall();
-                        resolved = true;
+                        try {
+                            const response = await useFetchCall();
+                            retriedTimes++;
+                            retriedConditions.push(response.status);
+                            result = { response, retries: { quantity: retriedTimes, conditions: retriedConditions } };
+                            if (response.ok) {
+                                resolved = true;
+                            }
+                        } catch (error) {
+                            reject(error);
+                        }
                     }
                 }
 
-                resolve(result.responseJson);
+                resolve(result);
             } catch (error) {
                 console.error(error);
                 reject(error);

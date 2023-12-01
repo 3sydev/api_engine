@@ -98,6 +98,22 @@ const apiConstantsTs: ApiConstantsType = {
             retry: 0,
             retryCondition: [],
         },
+        getResourcesWithRetryOK: {
+            path: '/posts',
+            request: {
+                method: 'GET',
+            },
+            retry: 3,
+            retryCondition: [400, 404, 200],
+        },
+        getResourcesWithRetryKO: {
+            path: '/p',
+            request: {
+                method: 'GET',
+            },
+            retry: 3,
+            retryCondition: [400, 404],
+        },
     },
 };
 
