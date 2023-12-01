@@ -5,7 +5,7 @@ declare namespace API {
 
     function getApiTypes(): ApiTypes;
 
-    function call(type: ApiTypes, parameters?: ApiParameters): Promise<CallRespose>;
+    function call(type: string, parameters?: ApiParameters): Promise<CallRespose>;
 }
 
 export default API;
