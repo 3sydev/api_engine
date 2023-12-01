@@ -44,7 +44,7 @@ export type Retries = {
     conditions: number[];
 };
 
-export type CallRespose = {
+export type CallResponse = {
     response: Response;
     retries: Retries;
 };

@@ -1,4 +1,4 @@
-import { ApiConstants, ApiParameters, ApiParametersInternal, ApiTypes, CallRespose, Endpoint, PathQueryParameters } from './types';
+import { ApiConstants, ApiParameters, ApiParametersInternal, ApiTypes, CallResponse, Endpoint, PathQueryParameters } from './types';
 import fetch, { BodyInit, RequestInit, Response } from 'node-fetch';
 
 export default class API {
@@ -29,7 +29,7 @@ export default class API {
 
     getApiTypes = (): ApiTypes => this.apiTypes;
 
-    call = (type: string, parameters?: ApiParameters): Promise<CallRespose> => {
+    call = (type: string, parameters?: ApiParameters): Promise<CallResponse> => {
         return new Promise(async (resolve, reject) => {
             try {
                 const defaultParameters: ApiParametersInternal = { pathQueryParameters: [{ name: '', value: '' }], headers: {}, body: {} as BodyInit };
@@ -46,7 +46,7 @@ export default class API {
                 const useFetchResponse = await useFetchCall();
                 const retryCondition: boolean = this.retryCondition(type, useFetchResponse.status);
 
-                let result: CallRespose = { response: {} as Response, retries: { quantity: 0, conditions: [] } };
+                let result: CallResponse = { response: {} as Response, retries: { quantity: 0, conditions: [] } };
                 if (retryCondition) {
                     result = await this.manageRetry(type, useFetchCall);
                 } else if (useFetchResponse.ok) {
@@ -100,11 +100,11 @@ export default class API {
         return result;
     };
 
-    private manageRetry = (type: string, useFetchCall: () => Promise<Response>): Promise<CallRespose> => {
+    private manageRetry = (type: string, useFetchCall: () => Promise<Response>): Promise<CallResponse> => {
         return new Promise(async (resolve, reject) => {
             try {
                 let resolved: boolean = false;
-                let result: CallRespose = { response: {} as Response, retries: { quantity: 0, conditions: [] } };
+                let result: CallResponse = { response: {} as Response, retries: { quantity: 0, conditions: [] } };
                 const numberOfRetry = this.getApi(type).retry;
                 if (numberOfRetry < 0) throw new Error('"retry" parameter < 0');
 

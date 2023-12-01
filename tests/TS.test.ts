@@ -1,12 +1,10 @@
-import API from '../index';
-import { ApiParameters, CallRespose, Retries } from '../src/types';
+import APIEngine, { ApiParametersType, ApiCallResponseType } from '../index';
+import { Retries } from '../src/types';
 import apiConstantsTs from './mocks/mock_ts';
 import { FetchError } from 'node-fetch';
 
-const api = new API(apiConstantsTs);
+const api = new APIEngine(apiConstantsTs);
 const apiTypes = api.getApiTypes();
-
-const callApi = async (types: string, parameters?: ApiParameters) => await api.call(types, parameters);
 
 describe('TypeScript tests', () => {
     describe('Initialization tests', () => {
@@ -35,35 +33,35 @@ describe('TypeScript tests', () => {
 
     describe('With parameters REST API calls', () => {
         test('Path parameter call OK', async () => {
-            const parameters: ApiParameters = {
+            const parameters: ApiParametersType = {
                 pathQueryParameters: [{ name: 'id', value: '1' }],
             };
             await expect(api.call(apiTypes.getResources, parameters)).resolves.toBeTruthy();
         });
 
         test('Path parameter call KO', async () => {
-            const parameters: ApiParameters = {
+            const parameters: ApiParametersType = {
                 pathQueryParameters: [{ name: 'id', value: 'sdvfevdc' }],
             };
             await expect(api.call(apiTypes.getResource, parameters)).rejects.toStrictEqual(new Error('Status code !== 2xx: 404'));
         });
 
         test('Query parameter call OK', async () => {
-            const parameters: ApiParameters = {
+            const parameters: ApiParametersType = {
                 pathQueryParameters: [{ name: 'id', value: '1' }],
             };
             await expect(api.call(apiTypes.getUserResources, parameters)).resolves.toBeTruthy();
         });
 
         test('Query parameter call KO', async () => {
-            const parameters: ApiParameters = {
+            const parameters: ApiParametersType = {
                 pathQueryParameters: [{ name: 'sdcsdvsdv', value: 'sdvfevdc' }],
             };
             await expect(api.call(apiTypes.getUserResourcesKO, parameters)).rejects.toStrictEqual(new Error('Status code !== 2xx: 404'));
         });
 
         test('Mist parameters call OK', async () => {
-            const parameters: ApiParameters = {
+            const parameters: ApiParametersType = {
                 pathQueryParameters: [
                     { name: 'route', value: 'posts' },
                     { name: 'id', value: '1' },
@@ -73,7 +71,7 @@ describe('TypeScript tests', () => {
         });
 
         test('Mist parameters call KO', async () => {
-            const parameters: ApiParameters = {
+            const parameters: ApiParametersType = {
                 pathQueryParameters: [
                     { name: 'route', value: 'erfcekrnc' },
                     { name: 'id', value: 'dfvnodiefc' },
@@ -93,7 +91,7 @@ describe('TypeScript tests', () => {
         });
 
         test('Dinamic headers and body call OK', async () => {
-            const parameters: ApiParameters = {
+            const parameters: ApiParametersType = {
                 pathQueryParameters: [
                     { name: 'route', value: 'posts' },
                     { name: 'id', value: '1' },
@@ -107,7 +105,7 @@ describe('TypeScript tests', () => {
         });
 
         test('Dinamic headers and body call KO', async () => {
-            const parameters: ApiParameters = {
+            const parameters: ApiParametersType = {
                 pathQueryParameters: [
                     { name: 'route', value: 'erfcekrnc' },
                     { name: 'id', value: 'dfvnodiefc' },
@@ -125,13 +123,13 @@ describe('TypeScript tests', () => {
         test('Retry OK', async () => {
             expect.assertions(1);
             const res = await api.call(apiTypes.getResourcesWithRetryOK);
-            expect(res.retries).toEqual<CallRespose>(expect.objectContaining<Retries>({ quantity: 1, conditions: [200] }));
+            expect(res.retries).toEqual<ApiCallResponseType>(expect.objectContaining<Retries>({ quantity: 1, conditions: [200] }));
         });
 
         test('Retry KO', async () => {
             expect.assertions(1);
             const res = await api.call(apiTypes.getResourcesWithRetryKO);
-            expect(res.retries).toEqual<CallRespose>(expect.objectContaining<Retries>({ quantity: 3, conditions: [404, 404, 404] }));
+            expect(res.retries).toEqual<ApiCallResponseType>(expect.objectContaining<Retries>({ quantity: 3, conditions: [404, 404, 404] }));
         });
     });
 
@@ -141,7 +139,7 @@ describe('TypeScript tests', () => {
         });
 
         test('Empty "pathQueryParameters"', async () => {
-            const parameters: ApiParameters = {
+            const parameters: ApiParametersType = {
                 headers: {
                     Accept: 'application/json',
                 },

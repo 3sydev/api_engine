@@ -1,4 +1,4 @@
-import { ApiConstantsType } from '../..';
+import { ApiConstantsType } from '../../index';
 
 const apiConstantsTs: ApiConstantsType = {
     baseUrl: 'https://jsonplaceholder.typicode.com',

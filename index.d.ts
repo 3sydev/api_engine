@@ -1,11 +1,18 @@
-import { ApiConstants, ApiParameters, ApiTypes, CallRespose } from './src/types';
+import API from './src/API';
+import { ApiConstants, ApiParameters, ApiTypes, CallResponse } from './src/types';
 
-declare namespace API {
-    const apiConstants: ApiConstants;
+export declare type ApiConstantsType = ApiConstants;
+export declare type ApiParametersType = ApiParameters;
+export declare type ApiCallResponseType = CallResponse;
 
-    function getApiTypes(): ApiTypes;
+declare class APIEngine {
+    apiConstants: ApiConstants;
+    api: API;
 
-    function call(type: string, parameters?: ApiParameters): Promise<CallRespose>;
+    constructor(apiConstants: ApiConstants);
+
+    getApiTypes(): ApiTypes;
+    call(type: string, parameters?: ApiParameters): Promise<CallResponse>;
 }
 
-export default API;
+export default APIEngine;
