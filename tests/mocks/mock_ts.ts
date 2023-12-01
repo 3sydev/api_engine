@@ -19,6 +19,14 @@ const apiConstantsTs: ApiConstantsType = {
             retry: 0,
             retryCondition: [],
         },
+        getResourcesInvalidUrl: {
+            path: 'p',
+            request: {
+                method: 'GET',
+            },
+            retry: 0,
+            retryCondition: [],
+        },
         getResource: {
             path: '/posts/{id}',
             request: {
@@ -113,6 +121,14 @@ const apiConstantsTs: ApiConstantsType = {
             },
             retry: 3,
             retryCondition: [400, 404],
+        },
+        getResourcesInvalidRetry: {
+            path: '/posts',
+            request: {
+                method: 'GET',
+            },
+            retry: -1,
+            retryCondition: [400, 404, 200],
         },
     },
 };

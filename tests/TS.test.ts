@@ -1,6 +1,7 @@
 import API from '../index';
 import { ApiParameters, CallRespose, Retries } from '../src/types';
 import apiConstantsTs from './mocks/mock_ts';
+import { FetchError } from 'node-fetch';
 
 describe('TypeScript tests', () => {
     describe('Initialization tests', () => {
@@ -32,6 +33,20 @@ describe('TypeScript tests', () => {
                 expect(res).toBeUndefined();
             } catch (error) {
                 expect(error).toStrictEqual(new Error('Status code !== 2xx: 404'));
+            }
+        });
+    });
+
+    describe('Fetch KO', () => {
+        test('Not valid URL', async () => {
+            const api = new API(apiConstantsTs);
+            const apiTypes = api.getApiTypes();
+
+            try {
+                const res = await api.call(apiTypes.getResourcesInvalidUrl);
+                expect(res).toBeUndefined();
+            } catch (error) {
+                expect(error).toStrictEqual(new FetchError('request to https://jsonplaceholder.typicode.comp/ failed, reason: getaddrinfo ENOTFOUND jsonplaceholder.typicode.comp', 'system'));
             }
         });
     });
@@ -231,6 +246,39 @@ describe('TypeScript tests', () => {
                 const res = await api.call(apiTypes.getResourcesWithRetryKO);
 
                 expect(res.retries).toEqual<CallRespose>(expect.objectContaining<Retries>({ quantity: 3, conditions: [404, 404, 404] }));
+            } catch (error) {
+                expect(error).toBeUndefined();
+            }
+        });
+    });
+
+    describe('Missing parameters', () => {
+        test('"retry" < 0', async () => {
+            const api = new API(apiConstantsTs);
+            const apiTypes = api.getApiTypes();
+
+            try {
+                const res = await api.call(apiTypes.getResourcesInvalidRetry);
+
+                expect(res).toBeUndefined();
+            } catch (error) {
+                expect(error).toStrictEqual(new Error('"retry" parameter < 0'));
+            }
+        });
+
+        test('Empty "pathQueryParameters"', async () => {
+            const api = new API(apiConstantsTs);
+            const apiTypes = api.getApiTypes();
+            const parameters: ApiParameters = {
+                headers: {
+                    Accept: 'application/json',
+                },
+            };
+
+            try {
+                const res = await api.call(apiTypes.getResources, parameters);
+
+                expect(res).toBeTruthy();
             } catch (error) {
                 expect(error).toBeUndefined();
             }

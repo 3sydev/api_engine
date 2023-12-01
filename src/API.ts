@@ -1,4 +1,4 @@
-import { ApiConstants, ApiParameters, ApiTypes, CallRespose, Endpoint, PathQueryParameters, UseFetch } from './types';
+import { ApiConstants, ApiParameters, ApiParametersInternal, ApiTypes, CallRespose, Endpoint, PathQueryParameters } from './types';
 import fetch, { BodyInit, RequestInit, Response } from 'node-fetch';
 
 export default class API {
@@ -8,7 +8,7 @@ export default class API {
     constructor(apiConstants: ApiConstants) {
         if (!apiConstants) throw new Error('Error on API constructor: apiConstants not defined.');
         this.apiConstants = apiConstants;
-        this.apiTypes = Object.keys(this.apiConstants.endpoints)?.reduce((o, key) => ({ ...o, [key]: key }), {});
+        this.apiTypes = Object.keys(this.apiConstants.endpoints).reduce((o, key) => ({ ...o, [key]: key }), {});
     }
 
     private getApi = (type: string): Endpoint => {
@@ -32,8 +32,13 @@ export default class API {
     call = (type: string, parameters?: ApiParameters): Promise<CallRespose> => {
         return new Promise(async (resolve, reject) => {
             try {
-                const defaultParameters: ApiParameters = { pathQueryParameters: [{ name: '', value: '' }], headers: {}, body: {} as BodyInit };
-                const requestUrl: string = this.generateUrl(type, parameters || defaultParameters);
+                const defaultParameters: ApiParametersInternal = { pathQueryParameters: [{ name: '', value: '' }], headers: {}, body: {} as BodyInit };
+                const internalParameters: ApiParametersInternal = {
+                    pathQueryParameters: parameters?.pathQueryParameters || defaultParameters.pathQueryParameters,
+                    headers: parameters?.headers || defaultParameters.headers,
+                    body: parameters?.body || defaultParameters.body,
+                };
+                const requestUrl: string = this.generateUrl(type, internalParameters);
 
                 const requestInit: RequestInit = this.generateRequest(type, parameters);
 
@@ -57,27 +62,25 @@ export default class API {
         });
     };
 
-    private setQueryParameters = (url: string, queryParameters: PathQueryParameters | undefined): string => {
-        if (!queryParameters) return url;
-
+    private setQueryParameters = (url: string, queryParameters: PathQueryParameters): string => {
         let newUrl = url;
 
         for (let parameter of queryParameters) {
-            newUrl = newUrl?.replace(`{${parameter.name}}`, encodeURIComponent(parameter.value));
+            newUrl = newUrl.replace(`{${parameter.name}}`, encodeURIComponent(parameter.value));
         }
 
         return newUrl;
     };
 
-    private generateUrl = (type: string, parameters: ApiParameters): string => {
+    private generateUrl = (type: string, parameters: ApiParametersInternal): string => {
         const url = this.apiConstants.baseUrl + this.getApi(type).path;
-        return this.setQueryParameters(url, parameters?.pathQueryParameters);
+        return this.setQueryParameters(url, parameters.pathQueryParameters);
     };
 
     private generateRequest = (type: string, parameters?: ApiParameters): RequestInit => {
         const { headers, body: _body } = parameters || { headers: {}, body: undefined };
         const staticRequest = this.getApi(type).request;
-        const staticRequestBody = staticRequest?.body;
+        const staticRequestBody = staticRequest.body;
 
         const body = _body ? JSON.stringify({ ...JSON.parse(staticRequestBody as string), ...JSON.parse(_body as string) } as BodyInit) : staticRequestBody;
 
@@ -91,8 +94,8 @@ export default class API {
     };
 
     private retryCondition = (type: string, statusCode: number): boolean => {
-        const conditionsStatus = this.getApi(type)?.retryCondition;
-        const result = conditionsStatus?.some((status) => status === statusCode) || false;
+        const conditionsStatus = this.getApi(type).retryCondition;
+        const result = conditionsStatus.some((status) => status === statusCode) || false;
 
         return result;
     };
@@ -102,7 +105,8 @@ export default class API {
             try {
                 let resolved: boolean = false;
                 let result: CallRespose = { response: {} as Response, retries: { quantity: 0, conditions: [] } };
-                const numberOfRetry = this.getApi(type)?.retry;
+                const numberOfRetry = this.getApi(type).retry;
+                if (numberOfRetry < 0) throw new Error('"retry" parameter < 0');
 
                 let retriedTimes = 0;
                 let retriedConditions = [];
@@ -117,15 +121,16 @@ export default class API {
                             if (response.ok) {
                                 resolved = true;
                             }
+                            /* c8 ignore start */
                         } catch (error) {
                             reject(error);
                         }
+                        /* c8 ignore end */
                     }
                 }
 
                 resolve(result);
             } catch (error) {
-                console.error(error);
                 reject(error);
             }
         });

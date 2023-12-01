@@ -33,10 +33,10 @@ export type ApiParameters = {
     body?: BodyInit;
 };
 
-export type UseFetch = {
-    statusCode: number;
-    isOk: boolean;
-    responseJson: object | undefined | unknown;
+export type ApiParametersInternal = {
+    pathQueryParameters: PathQueryParameters;
+    headers: HeadersInit;
+    body: BodyInit;
 };
 
 export type Retries = {
