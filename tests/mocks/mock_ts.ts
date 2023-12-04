@@ -196,6 +196,38 @@ const apiConstantsTs: ApiConstantsType = {
                 },
             ],
         },
+        getResourcesWithErrorMessage: {
+            path: '/p',
+            request: {
+                method: 'GET',
+            },
+            errorMessages: [{ statusCode: 404, errorCode: 'ERR', errorMessage: 'Error on GET' }],
+        },
+        getResourcesWithErrorMessageAndRetries: {
+            path: '/p',
+            request: {
+                method: 'GET',
+            },
+            retry: 2,
+            retryCondition: [404],
+            errorMessages: [{ statusCode: 404, errorCode: 'ERR', errorMessage: 'Error on GET with retry' }],
+        },
+        getResourcesWithErrorMessageNotGot: {
+            path: '/posts',
+            request: {
+                method: 'GET',
+            },
+            errorMessages: [{ statusCode: 404, errorCode: 'ERR', errorMessage: 'Error on GET' }],
+        },
+        getResourcesWithErrorMessageNotGotWithRetries: {
+            path: '/p',
+            request: {
+                method: 'GET',
+            },
+            retry: 2,
+            retryCondition: [404],
+            errorMessages: [{ statusCode: 400, errorCode: 'ERR', errorMessage: 'Error on GET' }],
+        },
     },
 };
 

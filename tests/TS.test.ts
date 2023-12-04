@@ -1,5 +1,5 @@
 import APIEngine, { ApiParametersType, ApiCallResponseType } from '../index';
-import { Retries } from '../src/types';
+import { ErrorStatus, Retries } from '../src/types';
 import apiConstantsTs, { resetStatusCodeActionsExecutions, statusCodeActionsExecutions } from './mocks/mock_ts';
 import apiConstantsTsGlobal from './mocks/mock_ts_globals';
 import apiConstantsTsGlobalNoParams from './mocks/mock_ts_globals_no_params';
@@ -315,6 +315,44 @@ describe('TypeScript tests', () => {
         test('Action with throw Error only on retries', async () => {
             expect.assertions(1);
             await expect(api.call(apiTypes.getResourcesActionsOnStatusCodesOnlyOnRetriesAndThrowError)).rejects.toStrictEqual(new Error('Error on 404 status code action execution'));
+        });
+    });
+
+    describe('Error messages', () => {
+        test('Error message without retries', async () => {
+            expect.assertions(2);
+            const res = await api.call(apiTypes.getResourcesWithErrorMessage);
+
+            expect(res.response.status).toEqual<number>(404);
+            expect(res.errorStatus).toEqual<ErrorStatus>({ isInError: true, errorCode: 'ERR', errorMessage: 'Error on GET' });
+        });
+
+        test('Error message with retries', async () => {
+            expect.assertions(4);
+            const res = await api.call(apiTypes.getResourcesWithErrorMessageAndRetries);
+
+            expect(res.response.status).toEqual<number>(404);
+            expect(res.retries.quantity).toEqual<number>(2);
+            expect(res.retries.conditions).toEqual<number[]>([404, 404]);
+            expect(res.errorStatus).toEqual<ErrorStatus>({ isInError: true, errorCode: 'ERR', errorMessage: 'Error on GET with retry' });
+        });
+
+        test('Error message not got', async () => {
+            expect.assertions(2);
+            const res = await api.call(apiTypes.getResourcesWithErrorMessageNotGot);
+
+            expect(res.response.status).toEqual<number>(200);
+            expect(res.errorStatus).toEqual<ErrorStatus>({ isInError: false, errorCode: '', errorMessage: '' });
+        });
+
+        test('Error message not got with retries', async () => {
+            expect.assertions(4);
+            const res = await api.call(apiTypes.getResourcesWithErrorMessageNotGotWithRetries);
+
+            expect(res.response.status).toEqual<number>(404);
+            expect(res.retries.quantity).toEqual<number>(2);
+            expect(res.retries.conditions).toEqual<number[]>([404, 404]);
+            expect(res.errorStatus).toEqual<ErrorStatus>({ isInError: false, errorCode: '', errorMessage: '' });
         });
     });
 });

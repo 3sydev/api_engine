@@ -7,6 +7,8 @@ import {
     CallResponse,
     EndpointGlobalInternal,
     EndpointInternal,
+    ErrorMessage,
+    ErrorStatus,
     IgnoreGlobalParam,
     PathQueryParameters,
     StatusCodeAction,
@@ -29,6 +31,7 @@ export default class API {
                 retryCondition: endpoint.retryCondition || [],
                 ignoreGlobalParams: endpoint.ignoreGlobalParams || [],
                 statusCodesActions: endpoint.statusCodesActions || [],
+                errorMessages: endpoint.errorMessages || [],
             } as EndpointInternal;
         });
         const internalGlobalParams: EndpointGlobalInternal = {
@@ -57,6 +60,7 @@ export default class API {
             retryCondition: ignoreGlobalParams.includes('retryCondition') ? api.retryCondition : [...globals.retryCondition, ...api.retryCondition],
             ignoreGlobalParams: ignoreGlobalParams,
             statusCodesActions: api.statusCodesActions,
+            errorMessages: api.errorMessages,
         };
 
         return result;
@@ -98,14 +102,15 @@ export default class API {
                 const retryCondition: boolean = this.retryCondition(requestApi, useFetchResponse.status);
 
                 let result: CallResponse = {
-                    requestApi: { path: '', request: {}, retry: 0, retryCondition: [], ignoreGlobalParams: [], statusCodesActions: [] },
+                    requestApi: { path: '', request: {}, retry: 0, retryCondition: [], ignoreGlobalParams: [], statusCodesActions: [], errorMessages: [] },
                     response: {} as Response,
                     retries: { quantity: 0, conditions: [] },
+                    errorStatus: { isInError: false, errorCode: '', errorMessage: '' },
                 };
                 if (retryCondition) {
                     result = await this.manageRetry(requestApi, useFetchCall);
                 } else {
-                    result = { requestApi, response: useFetchResponse, retries: { quantity: 0, conditions: [] } };
+                    result = { requestApi, response: useFetchResponse, retries: { quantity: 0, conditions: [] }, errorStatus: this.generateErrorStatus(requestApi, useFetchResponse.status) };
                 }
 
                 resolve(result);
@@ -174,9 +179,10 @@ export default class API {
             try {
                 let resolved: boolean = false;
                 let result: CallResponse = {
-                    requestApi: { path: '', request: {}, retry: 0, retryCondition: [], ignoreGlobalParams: [], statusCodesActions: [] },
+                    requestApi: { path: '', request: {}, retry: 0, retryCondition: [], ignoreGlobalParams: [], statusCodesActions: [], errorMessages: [] },
                     response: {} as Response,
                     retries: { quantity: 0, conditions: [] },
+                    errorStatus: { isInError: false, errorCode: '', errorMessage: '' },
                 };
                 const numberOfRetry = requestApi.retry;
                 if (numberOfRetry < 0) throw new Error('"retry" parameter < 0');
@@ -193,7 +199,12 @@ export default class API {
 
                             await this.executeActionOnStatusCode(requestApi, response.status, true);
 
-                            result = { requestApi, response, retries: { quantity: retriedTimes, conditions: retriedConditions } };
+                            result = {
+                                requestApi,
+                                response,
+                                retries: { quantity: retriedTimes, conditions: retriedConditions },
+                                errorStatus: this.generateErrorStatus(requestApi, response.status),
+                            };
                             if (response.ok) {
                                 resolved = true;
                             }
@@ -208,5 +219,15 @@ export default class API {
                 reject(error);
             }
         });
+    };
+
+    private generateErrorStatus = (requestApi: EndpointInternal, statusCode: number): ErrorStatus => {
+        const item: ErrorMessage | undefined = requestApi.errorMessages.find((error) => error.statusCode === statusCode);
+
+        const isInError: boolean = item ? true : false;
+        const errorCode: string = item?.errorCode || '';
+        const errorMessage: string = item?.errorMessage || '';
+
+        return { isInError, errorCode, errorMessage };
     };
 }
