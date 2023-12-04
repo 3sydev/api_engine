@@ -9,6 +9,7 @@ const apiTypes = api.getApiTypes();
 describe('TypeScript tests', () => {
     describe('Initialization tests', () => {
         test('Init with apiConstants', () => {
+            const api = new APIEngine(apiConstantsTs);
             expect(api).toBeTruthy();
         });
     });
