@@ -247,5 +247,19 @@ describe('TypeScript tests', () => {
             expect(res.requestApi.retry).toEqual<number>(apiConstantsTsGlobal.endpoints.getResourcesForDefaultsHeaders.retry!);
             expect(res.requestApi.retryCondition).toEqual<number[]>([404, 404, 404, 400]);
         });
+
+        test('Ignore global parameter', async () => {
+            expect.assertions(6);
+            const api = new APIEngine(apiConstantsTsGlobal);
+            const apiTypes = api.getApiTypes();
+            const res = await api.call(apiTypes.getResourcesIgnoreGlobalParams);
+
+            expect(res.response.status).toEqual<number>(200);
+            expect(res.response.url).toEqual<string>(apiConstantsTsGlobal.baseUrl + apiConstantsTsGlobal.endpoints.getResourcesIgnoreGlobalParams.path);
+            expect(res.requestApi.request?.method).toEqual<string>(apiConstantsTsGlobal.endpoints.getResourcesIgnoreGlobalParams.request?.method!);
+            expect(res.requestApi.request?.headers).toEqual(undefined);
+            expect(res.requestApi.retry).toEqual<number>(apiConstantsTsGlobal.endpoints.getResourcesIgnoreGlobalParams.retry!);
+            expect(res.requestApi.retryCondition).toEqual<number[]>([]);
+        });
     });
 });

@@ -1,4 +1,15 @@
-import { ApiConstants, ApiConstantsInternal, ApiParameters, ApiParametersInternal, ApiTypes, CallResponse, EndpointGlobalInternal, EndpointInternal, PathQueryParameters } from './types';
+import {
+    ApiConstants,
+    ApiConstantsInternal,
+    ApiParameters,
+    ApiParametersInternal,
+    ApiTypes,
+    CallResponse,
+    EndpointGlobalInternal,
+    EndpointInternal,
+    IgnoreGlobalParam,
+    PathQueryParameters,
+} from './types';
 import fetch, { BodyInit, RequestInit, Response } from 'node-fetch';
 
 export default class API {
@@ -7,6 +18,17 @@ export default class API {
 
     constructor(apiConstants: ApiConstants) {
         if (!apiConstants) throw new Error('Error on API constructor: apiConstants not defined.');
+        Object.keys(apiConstants.endpoints).forEach((key) => {
+            const endpoints = apiConstants.endpoints;
+            const endpoint = apiConstants.endpoints[key];
+            endpoints[key] = {
+                path: endpoint.path,
+                request: endpoint.request || {},
+                retry: endpoint.retry || 0,
+                retryCondition: endpoint.retryCondition || [],
+                ignoreGlobalParams: endpoint.ignoreGlobalParams || [],
+            } as EndpointInternal;
+        });
         const internalGlobalParams: EndpointGlobalInternal = {
             request: apiConstants.globalParams?.request || {},
             retry: apiConstants.globalParams?.retry || 0,
@@ -22,13 +44,16 @@ export default class API {
         const api = apis[type];
 
         if (!api) throw new Error('Api type not defined');
-        if (!api.request && Object.keys(globals.request).length === 0) throw new Error('Request parameter not defined');
+        if (Object.keys(api.request).length === 0 && Object.keys(globals.request).length === 0) throw new Error('Request parameter not defined');
+
+        const ignoreGlobalParams: IgnoreGlobalParam[] = api.ignoreGlobalParams;
 
         const result: EndpointInternal = {
             path: api.path,
-            request: { ...globals.request, ...api.request },
-            retry: api.retry || globals.retry || 0,
-            retryCondition: [...globals.retryCondition, ...api.retryCondition],
+            request: ignoreGlobalParams.includes('request') ? api.request : { ...globals.request, ...api.request },
+            retry: ignoreGlobalParams.includes('retry') ? api.retry : api.retry || globals.retry || 0,
+            retryCondition: ignoreGlobalParams.includes('retryCondition') ? api.retryCondition : [...globals.retryCondition, ...api.retryCondition],
+            ignoreGlobalParams: ignoreGlobalParams,
         };
 
         return result;
@@ -66,7 +91,11 @@ export default class API {
                 const useFetchResponse = await useFetchCall();
                 const retryCondition: boolean = this.retryCondition(requestApi, useFetchResponse.status);
 
-                let result: CallResponse = { requestApi: { path: '', request: {}, retry: 0, retryCondition: [] }, response: {} as Response, retries: { quantity: 0, conditions: [] } };
+                let result: CallResponse = {
+                    requestApi: { path: '', request: {}, retry: 0, retryCondition: [], ignoreGlobalParams: [] },
+                    response: {} as Response,
+                    retries: { quantity: 0, conditions: [] },
+                };
                 if (retryCondition) {
                     result = await this.manageRetry(requestApi, useFetchCall);
                 } else {
@@ -122,7 +151,11 @@ export default class API {
         return new Promise(async (resolve, reject) => {
             try {
                 let resolved: boolean = false;
-                let result: CallResponse = { requestApi: { path: '', request: {}, retry: 0, retryCondition: [] }, response: {} as Response, retries: { quantity: 0, conditions: [] } };
+                let result: CallResponse = {
+                    requestApi: { path: '', request: {}, retry: 0, retryCondition: [], ignoreGlobalParams: [] },
+                    response: {} as Response,
+                    retries: { quantity: 0, conditions: [] },
+                };
                 const numberOfRetry = requestApi.retry;
                 if (numberOfRetry < 0) throw new Error('"retry" parameter < 0');
 

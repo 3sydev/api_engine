@@ -27,6 +27,14 @@ const apiConstantsTsGlobal: ApiConstantsType = {
             retry: 3,
             retryCondition: [400],
         },
+        getResourcesIgnoreGlobalParams: {
+            path: '/posts',
+            request: {
+                method: 'GET',
+            },
+            retry: 3,
+            ignoreGlobalParams: ['request', 'retry', 'retryCondition'],
+        },
     },
 };
 

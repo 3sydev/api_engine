@@ -4,17 +4,14 @@ export type ApiTypes = {
     [key: string]: string;
 };
 
+export type IgnoreGlobalParam = 'request' | 'retry' | 'retryCondition';
+
 type Endpoint = {
     path: string;
     request?: RequestInit;
     retry?: number | 0;
     retryCondition?: number[];
-};
-
-export type EndpointGlobal = {
-    request?: RequestInit;
-    retry?: number | 0;
-    retryCondition?: number[];
+    ignoreGlobalParams?: IgnoreGlobalParam[];
 };
 
 export type EndpointInternal = {
@@ -22,6 +19,13 @@ export type EndpointInternal = {
     request: RequestInit;
     retry: number | 0;
     retryCondition: number[];
+    ignoreGlobalParams: IgnoreGlobalParam[];
+};
+
+export type EndpointGlobal = {
+    request?: RequestInit;
+    retry?: number | 0;
+    retryCondition?: number[];
 };
 
 export type EndpointGlobalInternal = {
