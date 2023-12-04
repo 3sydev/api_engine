@@ -4,8 +4,27 @@ export type ApiTypes = {
     [key: string]: string;
 };
 
-export type Endpoint = {
+type Endpoint = {
     path: string;
+    request?: RequestInit;
+    retry?: number | 0;
+    retryCondition?: number[];
+};
+
+export type EndpointGlobal = {
+    request?: RequestInit;
+    retry?: number | 0;
+    retryCondition?: number[];
+};
+
+export type EndpointInternal = {
+    path: string;
+    request: RequestInit;
+    retry: number | 0;
+    retryCondition: number[];
+};
+
+export type EndpointGlobalInternal = {
     request: RequestInit;
     retry: number | 0;
     retryCondition: number[];
@@ -15,9 +34,20 @@ type Endpoints = {
     [key: string]: Endpoint;
 };
 
+type EndpointsInternal = {
+    [key: string]: EndpointInternal;
+};
+
 export type ApiConstants = {
     baseUrl: string;
+    globalParams?: EndpointGlobal;
     endpoints: Endpoints;
+};
+
+export type ApiConstantsInternal = {
+    baseUrl: string;
+    globalParams: EndpointGlobalInternal;
+    endpoints: EndpointsInternal;
 };
 
 type Parameter = {
@@ -45,6 +75,7 @@ export type Retries = {
 };
 
 export type CallResponse = {
+    requestApi: EndpointInternal;
     response: Response;
     retries: Retries;
 };
