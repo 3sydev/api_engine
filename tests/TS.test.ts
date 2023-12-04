@@ -316,6 +316,22 @@ describe('TypeScript tests', () => {
             expect.assertions(1);
             await expect(api.call(apiTypes.getResourcesActionsOnStatusCodesOnlyOnRetriesAndThrowError)).rejects.toStrictEqual(new Error('Error on 404 status code action execution'));
         });
+
+        test('Action only on first call', async () => {
+            expect.assertions(3);
+
+            expect(statusCodeActionsExecutions).not.toEqual(expect.arrayContaining([{ statusCode: 404, testId: 'Action only on firstCall' }]));
+
+            const res = await api.call(apiTypes.getResourcesActionsOnStatusCodesOnlyOnFirstCall);
+
+            expect(res.response.status).toEqual<number>(404);
+            expect(statusCodeActionsExecutions).toEqual([{ statusCode: 404, testId: 'Action only on firstCall' }]);
+        });
+
+        test('Action with throw Error only on first call', async () => {
+            expect.assertions(1);
+            await expect(api.call(apiTypes.getResourcesActionsOnStatusCodesOnlyOnFirstCallAndThrowError)).rejects.toStrictEqual(new Error('Error on 404 status code action execution'));
+        });
     });
 
     describe('Error messages', () => {

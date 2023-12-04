@@ -156,9 +156,9 @@ export default class API {
             try {
                 const item: StatusCodeAction | undefined = requestApi.statusCodesActions.find((action) => action.statusCode === statusCode);
                 const action: Function | undefined = item?.action;
-                const executeOnlyOnRetries: boolean | undefined = item?.executeOnlyOnRetries;
+                const executeOnlyOn: 'firstCall' | 'retry' | undefined = item?.executeOnlyOn;
 
-                if (action && (!executeOnlyOnRetries || (executeOnlyOnRetries && isRetry))) await action();
+                if (action && (!executeOnlyOn || (executeOnlyOn === 'firstCall' && !isRetry) || (executeOnlyOn === 'retry' && isRetry))) await action();
 
                 resolve();
             } catch (error) {

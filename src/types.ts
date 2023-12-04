@@ -9,7 +9,7 @@ export type IgnoreGlobalParam = 'request' | 'retry' | 'retryCondition';
 export type StatusCodeAction = {
     statusCode: number;
     action: Function;
-    executeOnlyOnRetries?: boolean;
+    executeOnlyOn?: 'firstCall' | 'retry';
 };
 
 export type ErrorMessage = {

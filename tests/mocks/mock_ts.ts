@@ -175,7 +175,7 @@ const apiConstantsTs: ApiConstantsType = {
                 {
                     statusCode: 404,
                     action: () => statusCodeActionsExecutions.push({ statusCode: 404, testId: 'Action only on retries' }),
-                    executeOnlyOnRetries: true,
+                    executeOnlyOn: 'retry',
                 },
             ],
         },
@@ -192,7 +192,39 @@ const apiConstantsTs: ApiConstantsType = {
                     action: () => {
                         throw new Error('Error on 404 status code action execution');
                     },
-                    executeOnlyOnRetries: true,
+                    executeOnlyOn: 'retry',
+                },
+            ],
+        },
+        getResourcesActionsOnStatusCodesOnlyOnFirstCall: {
+            path: '/p',
+            request: {
+                method: 'GET',
+            },
+            retry: 2,
+            retryCondition: [404],
+            statusCodesActions: [
+                {
+                    statusCode: 404,
+                    action: () => statusCodeActionsExecutions.push({ statusCode: 404, testId: 'Action only on firstCall' }),
+                    executeOnlyOn: 'firstCall',
+                },
+            ],
+        },
+        getResourcesActionsOnStatusCodesOnlyOnFirstCallAndThrowError: {
+            path: '/p',
+            request: {
+                method: 'GET',
+            },
+            retry: 2,
+            retryCondition: [404],
+            statusCodesActions: [
+                {
+                    statusCode: 404,
+                    action: () => {
+                        throw new Error('Error on 404 status code action execution');
+                    },
+                    executeOnlyOn: 'firstCall',
                 },
             ],
         },
