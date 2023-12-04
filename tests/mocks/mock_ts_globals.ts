@@ -5,6 +5,10 @@ const apiConstantsTsGlobal: ApiConstantsType = {
     globalParams: {
         request: {
             method: 'GET',
+            headers: {
+                'Cache-Control': 'no-store',
+                Expires: '0',
+            },
         },
         retry: 0,
         retryCondition: [404, 404, 404],
@@ -15,6 +19,11 @@ const apiConstantsTsGlobal: ApiConstantsType = {
             request: {
                 method: 'POST',
             },
+            retry: 3,
+            retryCondition: [400],
+        },
+        getResourcesForDefaultsHeaders: {
+            path: '/posts',
             retry: 3,
             retryCondition: [400],
         },

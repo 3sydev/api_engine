@@ -4,7 +4,7 @@ import apiConstantsTs from './mocks/mock_ts';
 import apiConstantsTsGlobal from './mocks/mock_ts_globals';
 import apiConstantsTsGlobalNoParams from './mocks/mock_ts_globals_no_params';
 import apiConstantsTsGlobalSomeParams from './mocks/mock_ts_globals_some_params';
-import { FetchError } from 'node-fetch';
+import { FetchError, HeaderInit } from 'node-fetch';
 
 const api = new APIEngine(apiConstantsTs);
 const apiTypes = api.getApiTypes();
@@ -232,6 +232,20 @@ describe('TypeScript tests', () => {
             const apiTypes = api.getApiTypes();
 
             await expect(api.call(apiTypes.getResourcesNoRequest)).rejects.toStrictEqual(new Error('Request parameter not defined'));
+        });
+
+        test('Defaults headers on global parameters', async () => {
+            expect.assertions(6);
+            const api = new APIEngine(apiConstantsTsGlobal);
+            const apiTypes = api.getApiTypes();
+            const res = await api.call(apiTypes.getResourcesForDefaultsHeaders);
+
+            expect(res.response.status).toEqual<number>(200);
+            expect(res.response.url).toEqual<string>(apiConstantsTsGlobal.baseUrl + apiConstantsTsGlobal.endpoints.getResourcesForDefaultsHeaders.path);
+            expect(res.requestApi.request?.method).toEqual<string>(apiConstantsTsGlobal.globalParams?.request?.method!);
+            expect(res.requestApi.request?.headers).toMatchObject<HeaderInit>(apiConstantsTsGlobal.globalParams?.request?.headers!);
+            expect(res.requestApi.retry).toEqual<number>(apiConstantsTsGlobal.endpoints.getResourcesForDefaultsHeaders.retry!);
+            expect(res.requestApi.retryCondition).toEqual<number[]>([404, 404, 404, 400]);
         });
     });
 });
