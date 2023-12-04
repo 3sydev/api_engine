@@ -1,6 +1,6 @@
 import APIEngine, { ApiParametersType, ApiCallResponseType } from '../index';
 import { Retries } from '../src/types';
-import apiConstantsTs from './mocks/mock_ts';
+import apiConstantsTs, { resetStatusCodeActionsExecutions, statusCodeActionsExecutions } from './mocks/mock_ts';
 import apiConstantsTsGlobal from './mocks/mock_ts_globals';
 import apiConstantsTsGlobalNoParams from './mocks/mock_ts_globals_no_params';
 import apiConstantsTsGlobalSomeParams from './mocks/mock_ts_globals_some_params';
@@ -17,9 +17,7 @@ describe('TypeScript tests', () => {
         });
 
         test('Api type not defined', async () => {
-            const api = new APIEngine(apiConstantsTs);
-            const apiTypes = api.getApiTypes();
-
+            expect.assertions(1);
             await expect(api.call(apiTypes.invalidApiType)).rejects.toStrictEqual(new Error('Api type not defined'));
         });
     });
@@ -40,6 +38,7 @@ describe('TypeScript tests', () => {
 
     describe('Fetch KO', () => {
         test('Not valid URL', async () => {
+            expect.assertions(1);
             await expect(api.call(apiTypes.getResourcesInvalidUrl)).rejects.toStrictEqual(
                 new FetchError('request to https://jsonplaceholder.typicode.comp/ failed, reason: getaddrinfo ENOTFOUND jsonplaceholder.typicode.comp', 'system')
             );
@@ -172,6 +171,7 @@ describe('TypeScript tests', () => {
 
     describe('Missing parameters', () => {
         test('"retry" < 0', async () => {
+            expect.assertions(1);
             await expect(api.call(apiTypes.getResourcesInvalidRetry)).rejects.toStrictEqual(new Error('"retry" parameter < 0'));
         });
 
@@ -228,6 +228,7 @@ describe('TypeScript tests', () => {
         });
 
         test('Empty request parameter', async () => {
+            expect.assertions(1);
             const api = new APIEngine(apiConstantsTsGlobalNoParams);
             const apiTypes = api.getApiTypes();
 
@@ -260,6 +261,60 @@ describe('TypeScript tests', () => {
             expect(res.requestApi.request?.headers).toEqual(undefined);
             expect(res.requestApi.retry).toEqual<number>(apiConstantsTsGlobal.endpoints.getResourcesIgnoreGlobalParams.retry!);
             expect(res.requestApi.retryCondition).toEqual<number[]>([]);
+        });
+    });
+
+    describe('Actions on status codes', () => {
+        beforeEach(resetStatusCodeActionsExecutions);
+
+        test('Action without retries', async () => {
+            expect.assertions(3);
+
+            expect(statusCodeActionsExecutions).not.toEqual(expect.arrayContaining([{ statusCode: 200, testId: 'Action without retries' }]));
+
+            const res = await api.call(apiTypes.getResourcesActionsOnStatusCodes);
+
+            expect(res.response.status).toEqual<number>(200);
+            expect(statusCodeActionsExecutions).toEqual(expect.arrayContaining([{ statusCode: 200, testId: 'Action without retries' }]));
+        });
+
+        test('Action with retries', async () => {
+            expect.assertions(3);
+
+            expect(statusCodeActionsExecutions).not.toEqual(expect.arrayContaining([{ statusCode: 404, testId: 'Action with retries' }]));
+
+            const res = await api.call(apiTypes.getResourcesActionsOnStatusCodesWithRetries);
+
+            expect(res.response.status).toEqual<number>(404);
+            expect(statusCodeActionsExecutions).toEqual([
+                { statusCode: 404, testId: 'Action with retries' },
+                { statusCode: 404, testId: 'Action with retries' },
+                { statusCode: 404, testId: 'Action with retries' },
+            ]);
+        });
+
+        test('Action with throw Error', async () => {
+            expect.assertions(1);
+            await expect(api.call(apiTypes.getResourcesActionsOnStatusCodesWithThrow)).rejects.toStrictEqual(new Error('Error on 200 status code action execution'));
+        });
+
+        test('Action only on retries', async () => {
+            expect.assertions(3);
+
+            expect(statusCodeActionsExecutions).not.toEqual(expect.arrayContaining([{ statusCode: 404, testId: 'Action only on retries' }]));
+
+            const res = await api.call(apiTypes.getResourcesActionsOnStatusCodesOnlyOnRetries);
+
+            expect(res.response.status).toEqual<number>(404);
+            expect(statusCodeActionsExecutions).toEqual([
+                { statusCode: 404, testId: 'Action only on retries' },
+                { statusCode: 404, testId: 'Action only on retries' },
+            ]);
+        });
+
+        test('Action with throw Error only on retries', async () => {
+            expect.assertions(1);
+            await expect(api.call(apiTypes.getResourcesActionsOnStatusCodesOnlyOnRetriesAndThrowError)).rejects.toStrictEqual(new Error('Error on 404 status code action execution'));
         });
     });
 });

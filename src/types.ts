@@ -6,12 +6,15 @@ export type ApiTypes = {
 
 export type IgnoreGlobalParam = 'request' | 'retry' | 'retryCondition';
 
+export type StatusCodeAction = { statusCode: number; action: Function; executeOnlyOnRetries?: boolean };
+
 type Endpoint = {
     path: string;
     request?: RequestInit;
     retry?: number | 0;
     retryCondition?: number[];
     ignoreGlobalParams?: IgnoreGlobalParam[];
+    statusCodesActions?: StatusCodeAction[];
 };
 
 export type EndpointInternal = {
@@ -20,6 +23,7 @@ export type EndpointInternal = {
     retry: number | 0;
     retryCondition: number[];
     ignoreGlobalParams: IgnoreGlobalParam[];
+    statusCodesActions: StatusCodeAction[];
 };
 
 export type EndpointGlobal = {

@@ -1,5 +1,9 @@
 import { ApiConstantsType } from '../../index';
 
+export let statusCodeActionsExecutions: { statusCode: number; testId: string }[] = [];
+
+export const resetStatusCodeActionsExecutions = () => (statusCodeActionsExecutions = []);
+
 const apiConstantsTs: ApiConstantsType = {
     baseUrl: 'https://jsonplaceholder.typicode.com',
     endpoints: {
@@ -129,6 +133,68 @@ const apiConstantsTs: ApiConstantsType = {
             },
             retry: -1,
             retryCondition: [400, 404, 200],
+        },
+        getResourcesActionsOnStatusCodes: {
+            path: '/posts',
+            request: {
+                method: 'GET',
+            },
+            statusCodesActions: [{ statusCode: 200, action: () => statusCodeActionsExecutions.push({ statusCode: 200, testId: 'Action without retries' }) }],
+        },
+        getResourcesActionsOnStatusCodesWithRetries: {
+            path: '/p',
+            request: {
+                method: 'GET',
+            },
+            retry: 2,
+            retryCondition: [404],
+            statusCodesActions: [{ statusCode: 404, action: () => statusCodeActionsExecutions.push({ statusCode: 404, testId: 'Action with retries' }) }],
+        },
+        getResourcesActionsOnStatusCodesWithThrow: {
+            path: '/posts',
+            request: {
+                method: 'GET',
+            },
+            statusCodesActions: [
+                {
+                    statusCode: 200,
+                    action: () => {
+                        throw new Error('Error on 200 status code action execution');
+                    },
+                },
+            ],
+        },
+        getResourcesActionsOnStatusCodesOnlyOnRetries: {
+            path: '/p',
+            request: {
+                method: 'GET',
+            },
+            retry: 2,
+            retryCondition: [404],
+            statusCodesActions: [
+                {
+                    statusCode: 404,
+                    action: () => statusCodeActionsExecutions.push({ statusCode: 404, testId: 'Action only on retries' }),
+                    executeOnlyOnRetries: true,
+                },
+            ],
+        },
+        getResourcesActionsOnStatusCodesOnlyOnRetriesAndThrowError: {
+            path: '/p',
+            request: {
+                method: 'GET',
+            },
+            retry: 2,
+            retryCondition: [404],
+            statusCodesActions: [
+                {
+                    statusCode: 404,
+                    action: () => {
+                        throw new Error('Error on 404 status code action execution');
+                    },
+                    executeOnlyOnRetries: true,
+                },
+            ],
         },
     },
 };

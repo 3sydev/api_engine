@@ -9,6 +9,7 @@ import {
     EndpointInternal,
     IgnoreGlobalParam,
     PathQueryParameters,
+    StatusCodeAction,
 } from './types';
 import fetch, { BodyInit, RequestInit, Response } from 'node-fetch';
 
@@ -27,6 +28,7 @@ export default class API {
                 retry: endpoint.retry || 0,
                 retryCondition: endpoint.retryCondition || [],
                 ignoreGlobalParams: endpoint.ignoreGlobalParams || [],
+                statusCodesActions: endpoint.statusCodesActions || [],
             } as EndpointInternal;
         });
         const internalGlobalParams: EndpointGlobalInternal = {
@@ -54,6 +56,7 @@ export default class API {
             retry: ignoreGlobalParams.includes('retry') ? api.retry : api.retry || globals.retry || 0,
             retryCondition: ignoreGlobalParams.includes('retryCondition') ? api.retryCondition : [...globals.retryCondition, ...api.retryCondition],
             ignoreGlobalParams: ignoreGlobalParams,
+            statusCodesActions: api.statusCodesActions,
         };
 
         return result;
@@ -89,10 +92,13 @@ export default class API {
 
                 const useFetchCall = async (): Promise<Response> => await this.useFetch(requestUrl, requestInit);
                 const useFetchResponse = await useFetchCall();
+
+                await this.executeActionOnStatusCode(requestApi, useFetchResponse.status);
+
                 const retryCondition: boolean = this.retryCondition(requestApi, useFetchResponse.status);
 
                 let result: CallResponse = {
-                    requestApi: { path: '', request: {}, retry: 0, retryCondition: [], ignoreGlobalParams: [] },
+                    requestApi: { path: '', request: {}, retry: 0, retryCondition: [], ignoreGlobalParams: [], statusCodesActions: [] },
                     response: {} as Response,
                     retries: { quantity: 0, conditions: [] },
                 };
@@ -140,6 +146,22 @@ export default class API {
         return request;
     };
 
+    private executeActionOnStatusCode = async (requestApi: EndpointInternal, statusCode: number, isRetry: boolean = false): Promise<void> => {
+        return new Promise(async (resolve, reject) => {
+            try {
+                const item: StatusCodeAction | undefined = requestApi.statusCodesActions.find((action) => action.statusCode === statusCode);
+                const action: Function | undefined = item?.action;
+                const executeOnlyOnRetries: boolean | undefined = item?.executeOnlyOnRetries;
+
+                if (action && (!executeOnlyOnRetries || (executeOnlyOnRetries && isRetry))) await action();
+
+                resolve();
+            } catch (error) {
+                reject(error);
+            }
+        });
+    };
+
     private retryCondition = (requestApi: EndpointInternal, statusCode: number): boolean => {
         const conditionsStatus = requestApi.retryCondition;
         const result = conditionsStatus.some((status) => status === statusCode) || false;
@@ -152,7 +174,7 @@ export default class API {
             try {
                 let resolved: boolean = false;
                 let result: CallResponse = {
-                    requestApi: { path: '', request: {}, retry: 0, retryCondition: [], ignoreGlobalParams: [] },
+                    requestApi: { path: '', request: {}, retry: 0, retryCondition: [], ignoreGlobalParams: [], statusCodesActions: [] },
                     response: {} as Response,
                     retries: { quantity: 0, conditions: [] },
                 };
@@ -168,15 +190,16 @@ export default class API {
                             const response = await useFetchCall();
                             retriedTimes++;
                             retriedConditions.push(response.status);
+
+                            await this.executeActionOnStatusCode(requestApi, response.status, true);
+
                             result = { requestApi, response, retries: { quantity: retriedTimes, conditions: retriedConditions } };
                             if (response.ok) {
                                 resolved = true;
                             }
-                            /* c8 ignore start */
                         } catch (error) {
                             reject(error);
                         }
-                        /* c8 ignore end */
                     }
                 }
 
