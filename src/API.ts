@@ -20,7 +20,9 @@ export default class API {
     private apiTypes: ApiTypes;
 
     constructor(apiConstants: ApiConstants) {
+        //throw Error if apiConstants is not defined
         if (!apiConstants) throw new Error('Error on API constructor: apiConstants not defined.');
+        //remap endpoints as EndpointInternal type
         Object.keys(apiConstants.endpoints).forEach((key) => {
             const endpoints = apiConstants.endpoints;
             const endpoint = apiConstants.endpoints[key];
@@ -34,15 +36,19 @@ export default class API {
                 errorMessages: endpoint.errorMessages || [],
             } as EndpointInternal;
         });
+        //remap globalParams as EndpointGlobalInternal type
         const internalGlobalParams: EndpointGlobalInternal = {
             request: apiConstants.globalParams?.request || {},
             retry: apiConstants.globalParams?.retry || 0,
             retryCondition: apiConstants.globalParams?.retryCondition || [],
         };
+        //initialize apiConstants as ApiConstantsInternal type
         this.apiConstants = { ...(apiConstants as ApiConstantsInternal), globalParams: internalGlobalParams };
+        //initialize apiTypes to return array of strings of all endpoints object properties
         this.apiTypes = Object.keys(this.apiConstants.endpoints).reduce((o, key) => ({ ...o, [key]: key }), {});
     }
 
+    //returns endpoint from property string as EndpointInternal type
     private getApi = (type: string): EndpointInternal => {
         const apis = this.apiConstants.endpoints;
         const globals = this.apiConstants.globalParams;
@@ -66,6 +72,7 @@ export default class API {
         return result;
     };
 
+    //Execute fetch method and returns Promise as Fetch Respose type
     private useFetch = (requestUrl: string, requestInit: RequestInit): Promise<Response> => {
         return new Promise(async (resolve, reject) => {
             try {
@@ -77,30 +84,42 @@ export default class API {
         });
     };
 
+    //returns apiTypes outside the API class
     getApiTypes = (): ApiTypes => this.apiTypes;
 
+    //execute Fetch call for REST API, from all params and configurations and returns Promise with CallResponse type
     call = (type: string, parameters?: ApiParameters): Promise<CallResponse> => {
         return new Promise(async (resolve, reject) => {
             try {
+                //define defaulte parameters to use if parameters weren't passed
                 const defaultParameters: ApiParametersInternal = { pathQueryParameters: [{ name: '', value: '' }], headers: {}, body: {} as BodyInit };
+                //define internal parameters to use in all methods
                 const internalParameters: ApiParametersInternal = {
                     pathQueryParameters: parameters?.pathQueryParameters || defaultParameters.pathQueryParameters,
                     headers: parameters?.headers || defaultParameters.headers,
                     body: parameters?.body || defaultParameters.body,
                 };
 
+                //endpoint got from property string as EndpointInternal type
                 const requestApi: EndpointInternal = this.getApi(type);
+                //url generated with path and query parameters
                 const requestUrl: string = this.generateUrl(requestApi, internalParameters);
 
+                //request object geenrated with apiConstants and parameters request properties
                 const requestInit: RequestInit = this.generateRequest(requestApi, parameters);
 
+                //definition of useFetch method already configured with parameters to use in retries iterations
                 const useFetchCall = async (): Promise<Response> => await this.useFetch(requestUrl, requestInit);
+                //useFetch first call
                 const useFetchResponse = await useFetchCall();
 
+                //execute actions by status code received from useFetch call
                 await this.executeActionOnStatusCode(requestApi, useFetchResponse.status);
 
+                //check if there's condition to make retries
                 const retryCondition: boolean = this.retryCondition(requestApi, useFetchResponse.status);
 
+                //initialization of result as CallResponse
                 let result: CallResponse = {
                     requestApi: { path: '', request: {}, retry: 0, retryCondition: [], ignoreGlobalParams: [], statusCodesActions: [], errorMessages: [] },
                     response: {} as Response,
@@ -108,18 +127,23 @@ export default class API {
                     errorStatus: { isInError: false, errorCode: '', errorMessage: '' },
                 };
                 if (retryCondition) {
+                    //if there's retryCondition will start the retries
                     result = await this.manageRetry(requestApi, useFetchCall);
                 } else {
+                    //else will be set the result with first useFetch call data
                     result = { requestApi, response: useFetchResponse, retries: { quantity: 0, conditions: [] }, errorStatus: await this.generateErrorStatus(requestApi, useFetchResponse.status) };
                 }
 
+                //resolve without errors
                 resolve(result);
             } catch (error) {
+                //resolve with errors
                 reject(error);
             }
         });
     };
 
+    //set query paramenters to url
     private setQueryParameters = (url: string, queryParameters: PathQueryParameters): string => {
         let newUrl = url;
 
@@ -130,11 +154,13 @@ export default class API {
         return newUrl;
     };
 
+    //generate url with path and query parameters
     private generateUrl = (requestApi: EndpointInternal, parameters: ApiParametersInternal): string => {
         const url = this.apiConstants.baseUrl + requestApi.path;
         return this.setQueryParameters(url, parameters.pathQueryParameters);
     };
 
+    //generate request for Fetch method as RequestInit type
     private generateRequest = (requestApi: EndpointInternal, parameters?: ApiParameters): RequestInit => {
         const { headers, body: _body } = parameters || { headers: {}, body: undefined };
         const staticRequest = requestApi.request;
@@ -151,6 +177,7 @@ export default class API {
         return request;
     };
 
+    //if found, execute action by status code
     private executeActionOnStatusCode = async (requestApi: EndpointInternal, statusCode: number, isRetry: boolean = false): Promise<void> => {
         return new Promise(async (resolve, reject) => {
             try {
@@ -167,6 +194,7 @@ export default class API {
         });
     };
 
+    //check if is a valid status code to make retries
     private retryCondition = (requestApi: EndpointInternal, statusCode: number): boolean => {
         const conditionsStatus = requestApi.retryCondition;
         const result = conditionsStatus.some((status) => status === statusCode) || false;
@@ -174,6 +202,7 @@ export default class API {
         return result;
     };
 
+    //handle retries with iteration of the quantity configured, the loop ends if the status code is ok
     private manageRetry = (requestApi: EndpointInternal, useFetchCall: () => Promise<Response>): Promise<CallResponse> => {
         return new Promise(async (resolve, reject) => {
             try {
@@ -221,6 +250,7 @@ export default class API {
         });
     };
 
+    //generate error status as ErrorStatus type if is found in response
     private generateErrorStatus = (requestApi: EndpointInternal, statusCode: number): Promise<ErrorStatus> => {
         return new Promise(async (resolve, reject) => {
             try {
