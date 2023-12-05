@@ -110,7 +110,7 @@ export default class API {
                 if (retryCondition) {
                     result = await this.manageRetry(requestApi, useFetchCall);
                 } else {
-                    result = { requestApi, response: useFetchResponse, retries: { quantity: 0, conditions: [] }, errorStatus: this.generateErrorStatus(requestApi, useFetchResponse.status) };
+                    result = { requestApi, response: useFetchResponse, retries: { quantity: 0, conditions: [] }, errorStatus: await this.generateErrorStatus(requestApi, useFetchResponse.status) };
                 }
 
                 resolve(result);
@@ -203,7 +203,7 @@ export default class API {
                                 requestApi,
                                 response,
                                 retries: { quantity: retriedTimes, conditions: retriedConditions },
-                                errorStatus: this.generateErrorStatus(requestApi, response.status),
+                                errorStatus: await this.generateErrorStatus(requestApi, response.status),
                             };
                             if (response.ok) {
                                 resolved = true;
@@ -221,13 +221,22 @@ export default class API {
         });
     };
 
-    private generateErrorStatus = (requestApi: EndpointInternal, statusCode: number): ErrorStatus => {
-        const item: ErrorMessage | undefined = requestApi.errorMessages.find((error) => error.statusCode === statusCode);
+    private generateErrorStatus = (requestApi: EndpointInternal, statusCode: number): Promise<ErrorStatus> => {
+        return new Promise(async (resolve, reject) => {
+            try {
+                const item: ErrorMessage | undefined = requestApi.errorMessages.find((error) => error.statusCode === statusCode);
 
-        const isInError: boolean = item ? true : false;
-        const errorCode: string = item?.errorCode || '';
-        const errorMessage: string = item?.errorMessage || '';
+                const isInError: boolean = item ? true : false;
+                const errorCode: string = item?.errorCode || '';
+                const errorMessage: string = item?.errorMessage || '';
+                const action: Function = item?.action || function () {};
 
-        return { isInError, errorCode, errorMessage };
+                if (action) await action();
+
+                resolve({ isInError, errorCode, errorMessage });
+            } catch (error) {
+                reject(new Error(`Error executing errorMessage action: ${error}`));
+            }
+        });
     };
 }

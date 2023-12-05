@@ -16,6 +16,7 @@ export type ErrorMessage = {
     statusCode: number;
     errorCode: string;
     errorMessage: string;
+    action?: Function;
 };
 
 type Endpoint = {

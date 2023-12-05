@@ -335,11 +335,15 @@ describe('TypeScript tests', () => {
     });
 
     describe('Error messages', () => {
+        beforeEach(resetStatusCodeActionsExecutions);
+
         test('Error message without retries', async () => {
-            expect.assertions(2);
+            expect.assertions(4);
             const res = await api.call(apiTypes.getResourcesWithErrorMessage);
 
             expect(res.response.status).toEqual<number>(404);
+            expect(res.retries.quantity).toEqual<number>(0);
+            expect(res.retries.conditions).toEqual<number[]>([]);
             expect(res.errorStatus).toEqual<ErrorStatus>({ isInError: true, errorCode: 'ERR', errorMessage: 'Error on GET' });
         });
 
@@ -354,10 +358,12 @@ describe('TypeScript tests', () => {
         });
 
         test('Error message not got', async () => {
-            expect.assertions(2);
+            expect.assertions(4);
             const res = await api.call(apiTypes.getResourcesWithErrorMessageNotGot);
 
             expect(res.response.status).toEqual<number>(200);
+            expect(res.retries.quantity).toEqual<number>(0);
+            expect(res.retries.conditions).toEqual<number[]>([]);
             expect(res.errorStatus).toEqual<ErrorStatus>({ isInError: false, errorCode: '', errorMessage: '' });
         });
 
@@ -369,6 +375,51 @@ describe('TypeScript tests', () => {
             expect(res.retries.quantity).toEqual<number>(2);
             expect(res.retries.conditions).toEqual<number[]>([404, 404]);
             expect(res.errorStatus).toEqual<ErrorStatus>({ isInError: false, errorCode: '', errorMessage: '' });
+        });
+
+        test('Error message action without retries', async () => {
+            expect.assertions(6);
+
+            expect(statusCodeActionsExecutions).not.toEqual(expect.arrayContaining([{ statusCode: 200, testId: 'Error message action without retries' }]));
+
+            const res = await api.call(apiTypes.getResourcesWithErrorMessageAction);
+
+            expect(res.response.status).toEqual<number>(200);
+            expect(res.retries.quantity).toEqual<number>(0);
+            expect(res.retries.conditions).toEqual<number[]>([]);
+            expect(res.errorStatus).toEqual<ErrorStatus>({ isInError: true, errorCode: 'SUCCESS', errorMessage: 'Call succeded' });
+            expect(statusCodeActionsExecutions).toEqual([{ statusCode: 200, testId: 'Error message action without retries' }]);
+        });
+
+        test('Error message action with retries', async () => {
+            expect.assertions(6);
+
+            expect(statusCodeActionsExecutions).not.toEqual(expect.arrayContaining([{ statusCode: 404, testId: 'Error message action with retries' }]));
+
+            const res = await api.call(apiTypes.getResourcesWithErrorMessageActionAndRetries);
+
+            expect(res.response.status).toEqual<number>(404);
+            expect(res.retries.quantity).toEqual<number>(2);
+            expect(res.retries.conditions).toEqual<number[]>([404, 404]);
+            expect(res.errorStatus).toEqual<ErrorStatus>({ isInError: true, errorCode: 'ERR', errorMessage: 'Call failed' });
+            expect(statusCodeActionsExecutions).toEqual([
+                { statusCode: 404, testId: 'Error message action with retries' },
+                { statusCode: 404, testId: 'Error message action with retries' },
+            ]);
+        });
+
+        test('Error message action with throw Error without retries', async () => {
+            expect.assertions(1);
+            await expect(api.call(apiTypes.getResourcesWithErrorMessageActionAndThrowError)).rejects.toStrictEqual(
+                new Error('Error executing errorMessage action: Error: Error on 404 error message action')
+            );
+        });
+
+        test('Error message action with throw Error with retries', async () => {
+            expect.assertions(1);
+            await expect(api.call(apiTypes.getResourcesWithErrorMessageActionAndRetriesAndThrowError)).rejects.toStrictEqual(
+                new Error('Error executing errorMessage action: Error: Error on 404 error message action')
+            );
         });
     });
 });

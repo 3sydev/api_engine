@@ -260,6 +260,70 @@ const apiConstantsTs: ApiConstantsType = {
             retryCondition: [404],
             errorMessages: [{ statusCode: 400, errorCode: 'ERR', errorMessage: 'Error on GET' }],
         },
+        getResourcesWithErrorMessageAction: {
+            path: '/posts',
+            request: {
+                method: 'GET',
+            },
+            errorMessages: [
+                {
+                    statusCode: 200,
+                    errorCode: 'SUCCESS',
+                    errorMessage: 'Call succeded',
+                    action: () => statusCodeActionsExecutions.push({ statusCode: 200, testId: 'Error message action without retries' }),
+                },
+            ],
+        },
+        getResourcesWithErrorMessageActionAndRetries: {
+            path: '/p',
+            request: {
+                method: 'GET',
+            },
+            retry: 2,
+            retryCondition: [404],
+            errorMessages: [
+                {
+                    statusCode: 404,
+                    errorCode: 'ERR',
+                    errorMessage: 'Call failed',
+                    action: () => statusCodeActionsExecutions.push({ statusCode: 404, testId: 'Error message action with retries' }),
+                },
+            ],
+        },
+        getResourcesWithErrorMessageActionAndThrowError: {
+            path: '/p',
+            request: {
+                method: 'GET',
+            },
+            errorMessages: [
+                {
+                    statusCode: 404,
+                    errorCode: 'ERR',
+                    errorMessage: 'Call failed',
+                    action: () => {
+                        throw new Error('Error on 404 error message action');
+                    },
+                },
+            ],
+        },
+        getResourcesWithErrorMessageActionAndRetriesAndThrowError: {
+            path: '/p',
+            request: {
+                method: 'GET',
+            },
+            retry: 2,
+            retryCondition: [404],
+            errorMessages: [
+                {
+                    statusCode: 404,
+                    errorCode: 'ERR',
+                    errorMessage: 'Call failed',
+                    action: () => {
+                        throw new Error('Error on 404 error message action');
+                    },
+                },
+            ],
+        },
     },
 };
 
