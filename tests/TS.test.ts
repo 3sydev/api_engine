@@ -1,4 +1,4 @@
-import APIEngine, { ApiParametersType, ApiCallResponseType } from '../index';
+import { APIEngine, ApiParameters, CallResponse } from '../src/index';
 import { ErrorStatus, Retries } from '../src/types';
 import apiConstantsTs, { resetStatusCodeActionsExecutions, statusCodeActionsExecutions } from './mocks/mock_ts';
 import apiConstantsTsGlobal, { resetStatusCodeActionsExecutionsGlobals, statusCodeActionsExecutionsGlobals } from './mocks/mock_ts_globals';
@@ -48,7 +48,7 @@ describe('TypeScript tests', () => {
     describe('With parameters REST API calls', () => {
         test('Path parameter call OK', async () => {
             expect.assertions(1);
-            const parameters: ApiParametersType = {
+            const parameters: ApiParameters = {
                 pathQueryParameters: [{ name: 'id', value: '1' }],
             };
             const res = await api.call(apiTypes.getResources, parameters);
@@ -57,7 +57,7 @@ describe('TypeScript tests', () => {
 
         test('Path parameter call KO', async () => {
             expect.assertions(1);
-            const parameters: ApiParametersType = {
+            const parameters: ApiParameters = {
                 pathQueryParameters: [{ name: 'id', value: 'sdvfevdc' }],
             };
             const res = await api.call(apiTypes.getResource, parameters);
@@ -66,7 +66,7 @@ describe('TypeScript tests', () => {
 
         test('Query parameter call OK', async () => {
             expect.assertions(1);
-            const parameters: ApiParametersType = {
+            const parameters: ApiParameters = {
                 pathQueryParameters: [{ name: 'id', value: '1' }],
             };
             const res = await api.call(apiTypes.getUserResources, parameters);
@@ -75,7 +75,7 @@ describe('TypeScript tests', () => {
 
         test('Query parameter call KO', async () => {
             expect.assertions(1);
-            const parameters: ApiParametersType = {
+            const parameters: ApiParameters = {
                 pathQueryParameters: [{ name: 'sdcsdvsdv', value: 'sdvfevdc' }],
             };
             const res = await api.call(apiTypes.getUserResourcesKO, parameters);
@@ -84,7 +84,7 @@ describe('TypeScript tests', () => {
 
         test('Mist parameters call OK', async () => {
             expect.assertions(1);
-            const parameters: ApiParametersType = {
+            const parameters: ApiParameters = {
                 pathQueryParameters: [
                     { name: 'route', value: 'posts' },
                     { name: 'id', value: '1' },
@@ -96,7 +96,7 @@ describe('TypeScript tests', () => {
 
         test('Mist parameters call KO', async () => {
             expect.assertions(1);
-            const parameters: ApiParametersType = {
+            const parameters: ApiParameters = {
                 pathQueryParameters: [
                     { name: 'route', value: 'erfcekrnc' },
                     { name: 'id', value: 'dfvnodiefc' },
@@ -122,7 +122,7 @@ describe('TypeScript tests', () => {
 
         test('Dinamic headers and body call OK', async () => {
             expect.assertions(1);
-            const parameters: ApiParametersType = {
+            const parameters: ApiParameters = {
                 pathQueryParameters: [
                     { name: 'route', value: 'posts' },
                     { name: 'id', value: '1' },
@@ -138,7 +138,7 @@ describe('TypeScript tests', () => {
 
         test('Dinamic headers and body call KO', async () => {
             expect.assertions(1);
-            const parameters: ApiParametersType = {
+            const parameters: ApiParameters = {
                 pathQueryParameters: [
                     { name: 'route', value: 'erfcekrnc' },
                     { name: 'id', value: 'dfvnodiefc' },
@@ -158,14 +158,14 @@ describe('TypeScript tests', () => {
             expect.assertions(2);
             const res = await api.call(apiTypes.getResourcesWithRetryOK);
             expect(res.response.status).toEqual<number>(200);
-            expect(res.retries).toEqual<ApiCallResponseType>(expect.objectContaining<Retries>({ quantity: 1, conditions: [200] }));
+            expect(res.retries).toEqual<CallResponse>(expect.objectContaining<Retries>({ quantity: 1, conditions: [200] }));
         });
 
         test('Retry KO', async () => {
             expect.assertions(2);
             const res = await api.call(apiTypes.getResourcesWithRetryKO);
             expect(res.response.status).toEqual<number>(404);
-            expect(res.retries).toEqual<ApiCallResponseType>(expect.objectContaining<Retries>({ quantity: 3, conditions: [404, 404, 404] }));
+            expect(res.retries).toEqual<CallResponse>(expect.objectContaining<Retries>({ quantity: 3, conditions: [404, 404, 404] }));
         });
     });
 
@@ -177,7 +177,7 @@ describe('TypeScript tests', () => {
 
         test('Empty "pathQueryParameters"', async () => {
             expect.assertions(1);
-            const parameters: ApiParametersType = {
+            const parameters: ApiParameters = {
                 headers: {
                     Accept: 'application/json',
                 },

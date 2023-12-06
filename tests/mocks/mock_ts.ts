@@ -1,10 +1,10 @@
-import { ApiConstantsType } from '../../index';
+import { ApiConstants } from '../../src';
 
 export let statusCodeActionsExecutions: { statusCode: number; testId: string }[] = [];
 
 export const resetStatusCodeActionsExecutions = () => (statusCodeActionsExecutions = []);
 
-const apiConstantsTs: ApiConstantsType = {
+const apiConstantsTs: ApiConstants = {
     baseUrl: 'https://jsonplaceholder.typicode.com',
     endpoints: {
         getResources: {

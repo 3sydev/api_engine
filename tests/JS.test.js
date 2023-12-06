@@ -1,4 +1,4 @@
-import APIEngine from '../index';
+import { APIEngine } from '../src/index';
 import apiConstantsJs, { resetStatusCodeActionsExecutions, statusCodeActionsExecutions } from './mocks/mock_js';
 import apiConstantsJsGlobal, { resetStatusCodeActionsExecutionsGlobals, statusCodeActionsExecutionsGlobals } from './mocks/mock_js_globals';
 import apiConstantsJsGlobalNoParams from './mocks/mock_js_globals_no_params';

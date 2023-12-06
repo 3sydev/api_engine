@@ -1,6 +1,6 @@
-import { ApiConstantsType } from '../../index';
+import { ApiConstants } from '../../src';
 
-const apiConstantsTsGlobalNoParams: ApiConstantsType = {
+const apiConstantsTsGlobalNoParams: ApiConstants = {
     baseUrl: 'https://jsonplaceholder.typicode.com',
     endpoints: {
         getResources: {

@@ -1,10 +1,10 @@
-import { ApiConstantsType } from '../../index';
+import { ApiConstants } from '../../src';
 
 export let statusCodeActionsExecutionsGlobals: { statusCode: number; testId: string }[] = [];
 
 export const resetStatusCodeActionsExecutionsGlobals = () => (statusCodeActionsExecutionsGlobals = []);
 
-const apiConstantsTsGlobal: ApiConstantsType = {
+const apiConstantsTsGlobal: ApiConstants = {
     baseUrl: 'https://jsonplaceholder.typicode.com',
     globalParams: {
         request: {

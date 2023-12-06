@@ -37,7 +37,7 @@ Creating an apiConstants configuration file involves defining the various parame
 
 ```typescript
 // Import necessary types and modules
-import { ApiConstantsType, ApiEndpointType } from 'api-engine';
+import { ApiConstants, ApiEndpointType } from 'api-engine';
 ```
 
 ### 3. Define Global Parameters:
@@ -45,7 +45,7 @@ import { ApiConstantsType, ApiEndpointType } from 'api-engine';
 -   Specify global parameters that will apply to all endpoints. This can include the base URL, default headers, and global retry settings. For example:
 
 ```typescript
-const apiConstants: ApiConstantsType = {
+const apiConstants: ApiConstants = {
     baseUrl: 'https://api.example.com',
     globalParams: {
         request: {
@@ -70,7 +70,7 @@ export default apiConstants;
 -   Define individual endpoint configurations within the endpoints object. Specify the path, HTTP method, and any endpoint-specific parameters. For example:
 
 ```typescript
-const apiConstants: ApiConstantsType = {
+const apiConstants: ApiConstants = {
     baseUrl: 'https://api.example.com',
     globalParams: {
         // ... global parameters
@@ -127,12 +127,12 @@ By following these steps, you can create a flexible and organized apiConstants c
 
 To initialize the `APIEngine` class with the `apiConstants` configuration, you can follow these steps. Assuming you have the `apiConstants` configuration file and the `APIEngine` class:
 
-### 1. Import APIEngine class and apiConstants:
+### 1. import APIEngine class and apiConstants:
 
 Import the APIEngine class and the apiConstants configuration at the beginning of your file where you plan to use the API.
 
 ```typescript
-import APIEngine from 'api-engine';
+import { APIEngine } from 'api-engine';
 import apiConstants from './apiConstants'; // Update the path as needed
 ```
 
@@ -160,7 +160,7 @@ Adjust the method calls and parameters based on your specific API requirements a
 Here's how your code might look in a broader context:
 
 ```typescript
-import APIEngine from 'api-engine';
+import { APIEngine } from 'api-engine';
 import apiConstants from './apiConstants'; // Update the path as needed
 
 const apiInstance = new APIEngine(apiConstants);
@@ -182,7 +182,7 @@ Here's how you can use the `getApiTypes` method in your code:
 Assuming you have an instance of the `APIEngine` class:
 
 ```typescript
-import APIEngine from 'api-engine';
+import { APIEngine } from 'api-engine';
 import apiConstantsTs from './apiConstantsTs'; // Update the path as needed
 
 const apiInstance = new API(apiConstantsTs);
@@ -236,7 +236,7 @@ In your `APIEngine` class, `globalParams` is a set of configuration parameters t
 In your `apiConstants` configuration file, you can define `globalParams` by providing default values for common parameters that should apply to all endpoints:
 
 ```typescript
-const apiConstants: ApiConstantsType = {
+const apiConstants: ApiConstants = {
     baseUrl: 'https://api.example.com',
     globalParams: {
         request: {
@@ -290,7 +290,7 @@ In this example:
 You can override global parameters at the endpoint level by providing endpoint-specific values in the `request`, `retry`, `statusCodesActions` and `errorMessages` properties:
 
 ```typescript
-const apiConstants: ApiConstantsType = {
+const apiConstants: ApiConstants = {
     baseUrl: 'https://api.example.com',
     globalParams: {
         request: {
@@ -396,7 +396,7 @@ Here's how to use this feature in your `apiConstants` configuration file:
 #### Configuration Example:
 
 ```typescript
-const apiConstants: ApiConstantsType = {
+const apiConstants: ApiConstants = {
     baseUrl: 'https://api.example.com',
     globalParams: {
         request: {
@@ -441,7 +441,7 @@ To interact with different API endpoints, you can configure each endpoint in the
 ### Example Configuration:
 
 ```typescript
-const apiConstants: ApiConstantsType = {
+const apiConstants: ApiConstants = {
     baseUrl: 'https://api.example.com',
     globalParams: {
         // Global parameters (request, retry, etc.)

@@ -1,13 +1,9 @@
-import API from './src/API';
-import { ApiConstants, ApiParameters, ApiTypes, CallResponse } from './src/types';
+import API from './API';
+import { ApiConstants, ApiParameters, ApiTypes, CallResponse } from './types';
 
-export type ApiConstantsType = ApiConstants;
-export type ApiParametersType = ApiParameters;
-export type ApiCallResponseType = CallResponse;
-
-export default class APIEngine {
-    apiConstants: ApiConstants;
-    api: API;
+export class APIEngine {
+    private apiConstants: ApiConstants;
+    private api: API;
 
     constructor(apiConstants: ApiConstants) {
         this.apiConstants = apiConstants;
