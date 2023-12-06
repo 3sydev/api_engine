@@ -2,7 +2,7 @@
   "name": "@3sy/api-engine",
   "version": "0.0.1",
   "description": "REST API engine to simplify REST API integration in NodeJS applications.",
-  "main": "index.js",
+  "main": "index.ts",
   "scripts": {
     "test": "jest"
   },
@@ -19,7 +19,7 @@
     "fetch",
     "node-fetch"
   ],
-  "author": "3SY srl",
+  "author": "3SY srl <michael@3sy.dev> (https://3sy.it/)",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/3sydev/api_engine/issues"
