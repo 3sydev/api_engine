@@ -263,7 +263,7 @@ export default class API {
                 const errorMessage: string = item?.errorMessage || '';
                 const action: Function = item?.action || function () {};
 
-                if (action) await action();
+                await action();
 
                 resolve({ isInError, errorCode, errorMessage });
             } catch (error) {
