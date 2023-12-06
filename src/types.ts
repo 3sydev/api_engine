@@ -4,7 +4,7 @@ export type ApiTypes = {
     [key: string]: string;
 };
 
-export type IgnoreGlobalParam = 'request' | 'retry' | 'retryCondition';
+export type IgnoreGlobalParam = 'request' | 'retry' | 'retryCondition' | 'statusCodesActions' | 'errorMessages';
 
 export type StatusCodeAction = {
     statusCode: number;
@@ -43,12 +43,16 @@ export type EndpointGlobal = {
     request?: RequestInit;
     retry?: number | 0;
     retryCondition?: number[];
+    statusCodesActions?: StatusCodeAction[];
+    errorMessages?: ErrorMessage[];
 };
 
 export type EndpointGlobalInternal = {
     request: RequestInit;
     retry: number | 0;
     retryCondition: number[];
+    statusCodesActions: StatusCodeAction[];
+    errorMessages: ErrorMessage[];
 };
 
 type Endpoints = {

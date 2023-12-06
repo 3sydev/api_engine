@@ -1,7 +1,7 @@
 import APIEngine, { ApiParametersType, ApiCallResponseType } from '../index';
 import { ErrorStatus, Retries } from '../src/types';
 import apiConstantsTs, { resetStatusCodeActionsExecutions, statusCodeActionsExecutions } from './mocks/mock_ts';
-import apiConstantsTsGlobal from './mocks/mock_ts_globals';
+import apiConstantsTsGlobal, { resetStatusCodeActionsExecutionsGlobals, statusCodeActionsExecutionsGlobals } from './mocks/mock_ts_globals';
 import apiConstantsTsGlobalNoParams from './mocks/mock_ts_globals_no_params';
 import apiConstantsTsGlobalSomeParams from './mocks/mock_ts_globals_some_params';
 import { FetchError, HeaderInit } from 'node-fetch';
@@ -170,9 +170,9 @@ describe('TypeScript tests', () => {
     });
 
     describe('Missing parameters', () => {
-        test('"retry" < 0', async () => {
+        test('"retry" < 1', async () => {
             expect.assertions(1);
-            await expect(api.call(apiTypes.getResourcesInvalidRetry)).rejects.toStrictEqual(new Error('"retry" parameter < 0'));
+            await expect(api.call(apiTypes.getResourcesInvalidRetry)).rejects.toStrictEqual(new Error('"retry" parameter < 1'));
         });
 
         test('Empty "pathQueryParameters"', async () => {
@@ -188,6 +188,8 @@ describe('TypeScript tests', () => {
     });
 
     describe('Global parameters', () => {
+        beforeEach(resetStatusCodeActionsExecutionsGlobals);
+
         test('All parameters', async () => {
             expect.assertions(5);
             const api = new APIEngine(apiConstantsTsGlobal);
@@ -261,6 +263,43 @@ describe('TypeScript tests', () => {
             expect(res.requestApi.request?.headers).toEqual(undefined);
             expect(res.requestApi.retry).toEqual<number>(apiConstantsTsGlobal.endpoints.getResourcesIgnoreGlobalParams.retry!);
             expect(res.requestApi.retryCondition).toEqual<number[]>([]);
+        });
+
+        test('Global status code action', async () => {
+            expect.assertions(3);
+
+            expect(statusCodeActionsExecutionsGlobals).not.toEqual(expect.arrayContaining([{ statusCode: 404, testId: 'Action global' }]));
+
+            const api = new APIEngine(apiConstantsTsGlobal);
+            const apiTypes = api.getApiTypes();
+
+            const res = await api.call(apiTypes.getResourcesGlobalStatusCodeActions);
+
+            expect(res.response.status).toEqual<number>(404);
+            expect(statusCodeActionsExecutionsGlobals).toEqual([{ statusCode: 404, testId: 'Action global' }]);
+        });
+
+        test('Global error message', async () => {
+            expect.assertions(3);
+
+            expect(statusCodeActionsExecutionsGlobals).not.toEqual(expect.arrayContaining([{ statusCode: 200, testId: 'Action message global' }]));
+
+            const api = new APIEngine(apiConstantsTsGlobal);
+            const apiTypes = api.getApiTypes();
+            const res = await api.call(apiTypes.getResourcesGlobalErrorMessages);
+
+            expect(res.response.status).toEqual<number>(200);
+            expect(statusCodeActionsExecutionsGlobals).toEqual([{ statusCode: 200, testId: 'Action message global' }]);
+        });
+
+        test('Global ignored status code and error message', async () => {
+            expect.assertions(2);
+            const api = new APIEngine(apiConstantsTsGlobal);
+            const apiTypes = api.getApiTypes();
+            const res = await api.call(apiTypes.getResourcesGlobalIgnoredStatusCodeActionsAndErrorMessages);
+
+            expect(res.response.status).toEqual<number>(200);
+            expect(statusCodeActionsExecutionsGlobals).toEqual([]);
         });
     });
 

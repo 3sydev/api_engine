@@ -41,6 +41,8 @@ export default class API {
             request: apiConstants.globalParams?.request || {},
             retry: apiConstants.globalParams?.retry || 0,
             retryCondition: apiConstants.globalParams?.retryCondition || [],
+            statusCodesActions: apiConstants.globalParams?.statusCodesActions || [],
+            errorMessages: apiConstants.globalParams?.errorMessages || [],
         };
         //initialize apiConstants as ApiConstantsInternal type
         this.apiConstants = { ...(apiConstants as ApiConstantsInternal), globalParams: internalGlobalParams };
@@ -65,8 +67,8 @@ export default class API {
             retry: ignoreGlobalParams.includes('retry') ? api.retry : api.retry || globals.retry || 0,
             retryCondition: ignoreGlobalParams.includes('retryCondition') ? api.retryCondition : [...globals.retryCondition, ...api.retryCondition],
             ignoreGlobalParams: ignoreGlobalParams,
-            statusCodesActions: api.statusCodesActions,
-            errorMessages: api.errorMessages,
+            statusCodesActions: ignoreGlobalParams.includes('statusCodesActions') ? api.statusCodesActions : [...globals.statusCodesActions, ...api.statusCodesActions],
+            errorMessages: ignoreGlobalParams.includes('errorMessages') ? api.errorMessages : [...globals.errorMessages, ...api.errorMessages],
         };
 
         return result;
@@ -214,7 +216,7 @@ export default class API {
                     errorStatus: { isInError: false, errorCode: '', errorMessage: '' },
                 };
                 const numberOfRetry = requestApi.retry;
-                if (numberOfRetry < 0) throw new Error('"retry" parameter < 0');
+                if (numberOfRetry < 1) throw new Error('"retry" parameter < 1');
 
                 let retriedTimes = 0;
                 let retriedConditions = [];
