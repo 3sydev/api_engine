@@ -1,5 +1,5 @@
 {
-  "name": "api_engine",
+  "name": "@3sy/api_engine",
   "version": "0.0.1",
   "description": "REST API engine to simplify REST API integration in NodeJS applications.",
   "main": "index.js",
