@@ -72,6 +72,34 @@ const apiConstantsJsGlobal = {
             },
             ignoreGlobalParams: ['retry', 'retryCondition', 'statusCodesActions', 'errorMessages'],
         },
+        getResourcesGlobalOverrideStatusCodeActions: {
+            path: '/p',
+            request: {
+                method: 'GET',
+            },
+            ignoreGlobalParams: ['retry', 'retryCondition'],
+            statusCodesActions: [
+                {
+                    statusCode: 404,
+                    action: () => statusCodeActionsExecutionsGlobals.push({ statusCode: 404, testId: 'Action overridden' }),
+                },
+            ],
+        },
+        getResourcesGlobalOverrideErrorMessages: {
+            path: '/posts',
+            request: {
+                method: 'GET',
+            },
+            ignoreGlobalParams: ['retry', 'retryCondition'],
+            errorMessages: [
+                {
+                    statusCode: 200,
+                    errorCode: 'SUCCESS',
+                    errorMessage: 'Call succeded',
+                    action: () => statusCodeActionsExecutionsGlobals.push({ statusCode: 200, testId: 'Action message overridden' }),
+                },
+            ],
+        },
     },
 };
 

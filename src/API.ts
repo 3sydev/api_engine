@@ -14,6 +14,7 @@ import {
     StatusCodeAction,
 } from './types';
 import fetch, { BodyInit, RequestInit, Response } from 'node-fetch';
+import { generateGlobalArrayWithOverrides } from './utils';
 
 export default class API {
     private apiConstants: ApiConstantsInternal;
@@ -67,8 +68,10 @@ export default class API {
             retry: ignoreGlobalParams.includes('retry') ? api.retry : api.retry || globals.retry || 0,
             retryCondition: ignoreGlobalParams.includes('retryCondition') ? api.retryCondition : [...globals.retryCondition, ...api.retryCondition],
             ignoreGlobalParams: ignoreGlobalParams,
-            statusCodesActions: ignoreGlobalParams.includes('statusCodesActions') ? api.statusCodesActions : [...globals.statusCodesActions, ...api.statusCodesActions],
-            errorMessages: ignoreGlobalParams.includes('errorMessages') ? api.errorMessages : [...globals.errorMessages, ...api.errorMessages],
+            statusCodesActions: ignoreGlobalParams.includes('statusCodesActions')
+                ? api.statusCodesActions
+                : (generateGlobalArrayWithOverrides(globals.statusCodesActions, api.statusCodesActions) as StatusCodeAction[]),
+            errorMessages: ignoreGlobalParams.includes('errorMessages') ? api.errorMessages : (generateGlobalArrayWithOverrides(globals.errorMessages, api.errorMessages) as ErrorMessage[]),
         };
 
         return result;

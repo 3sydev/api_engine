@@ -304,6 +304,32 @@ describe('JavaScript tests', () => {
             expect(res.response.status).toEqual(200);
             expect(statusCodeActionsExecutionsGlobals).toEqual([]);
         });
+
+        test('Global status code actions overridden from endpoint', async () => {
+            expect.assertions(3);
+
+            expect(statusCodeActionsExecutionsGlobals).not.toEqual(expect.arrayContaining([{ statusCode: 404, testId: 'Action overridden' }]));
+
+            const api = new APIEngine(apiConstantsJsGlobal);
+            const apiTypes = api.getApiTypes();
+            const res = await api.call(apiTypes.getResourcesGlobalOverrideStatusCodeActions);
+
+            expect(res.response.status).toEqual(404);
+            expect(statusCodeActionsExecutionsGlobals).toEqual([{ statusCode: 404, testId: 'Action overridden' }]);
+        });
+
+        test('Global error messages overridden from endpoint', async () => {
+            expect.assertions(3);
+
+            expect(statusCodeActionsExecutionsGlobals).not.toEqual(expect.arrayContaining([{ statusCode: 200, testId: 'Action message overridden' }]));
+
+            const api = new APIEngine(apiConstantsJsGlobal);
+            const apiTypes = api.getApiTypes();
+            const res = await api.call(apiTypes.getResourcesGlobalOverrideErrorMessages);
+
+            expect(res.response.status).toEqual(200);
+            expect(statusCodeActionsExecutionsGlobals).toEqual([{ statusCode: 200, testId: 'Action message overridden' }]);
+        });
     });
 
     describe('Actions on status codes', () => {
