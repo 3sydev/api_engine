@@ -1,4 +1,4 @@
-import { BodyInit, RequestInit, Response } from 'node-fetch';
+import { BodyInit, Headers, HeadersInit, RequestInit, Response } from 'node-fetch';
 
 export type ApiTypes = {
     [key: string]: string;
@@ -65,12 +65,14 @@ type EndpointsInternal = {
 
 export type ApiConstants = {
     baseUrl: string;
+    enableStackTrace?: boolean; //TODO: handle in API class
     globalParams?: EndpointGlobal;
     endpoints: Endpoints;
 };
 
 export type ApiConstantsInternal = {
     baseUrl: string;
+    enableStackTrace: boolean;
     globalParams: EndpointGlobalInternal;
     endpoints: EndpointsInternal;
 };
@@ -110,4 +112,16 @@ export type CallResponse = {
     response: Response;
     retries: Retries;
     errorStatus: ErrorStatus;
+};
+
+export type StackTrace = {
+    startTimestamp: string;
+    endTimestamp: string;
+    requestUrl: string;
+    requestHeaders: HeadersInit;
+    responseHeaders: Headers;
+    requestBody: BodyInit;
+    responseBody: BodyInit;
+    errorMessage: string | unknown;
+    extraProperties?: any[];
 };

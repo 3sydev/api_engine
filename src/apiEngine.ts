@@ -1,5 +1,5 @@
 import API from './API';
-import { ApiConstants, ApiParameters, ApiTypes, CallResponse } from './types';
+import { ApiConstants, ApiParameters, ApiTypes, CallResponse, StackTrace } from './types';
 
 export class APIEngine {
     private apiConstants: ApiConstants;
@@ -21,4 +21,5 @@ export class APIEngine {
             }
         });
     };
+    getStackTraceLog = (): StackTrace[] => this.api.getStackTraceLog();
 }

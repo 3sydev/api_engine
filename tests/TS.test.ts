@@ -487,4 +487,17 @@ describe('TypeScript tests', () => {
             );
         });
     });
+
+    describe('Stack Trace tests', () => {
+        //TODO: indentify test cases
+        test('first stack trace test', async () => {
+            expect.assertions(1);
+
+            const res = await api.call(apiTypes.getResources);
+
+            expect(res.response.status).toEqual<number>(200);
+
+            // expect(api.getStackTraceLog())
+        });
+    });
 });

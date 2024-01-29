@@ -11,6 +11,7 @@ import {
     ErrorStatus,
     IgnoreGlobalParam,
     PathQueryParameters,
+    StackTrace,
     StatusCodeAction,
 } from './types';
 import fetch, { BodyInit, RequestInit, Response } from 'node-fetch';
@@ -19,6 +20,7 @@ import { generateGlobalArrayWithOverrides } from './utils';
 export default class API {
     private apiConstants: ApiConstantsInternal;
     private apiTypes: ApiTypes;
+    private stackTraceLog: StackTrace[] = [];
 
     constructor(apiConstants: ApiConstants) {
         //throw Error if apiConstants is not defined
@@ -77,14 +79,40 @@ export default class API {
         return result;
     };
 
+    //generate stack trace call log
+    private generateStackTraceCallLog = (requestUrl: string, requestInit: RequestInit, startTimestamp: string, response: Response, errorMessage: unknown): StackTrace => {
+        const stackTrace: StackTrace = {
+            startTimestamp,
+            endTimestamp: new Date().toISOString(),
+            requestUrl,
+            requestHeaders: requestInit?.headers || {},
+            responseHeaders: response?.headers || {},
+            requestBody: requestInit?.body || '',
+            responseBody: response?.body || {},
+            errorMessage: errorMessage,
+            extraProperties: [], //TODO: handle with apiConstants config
+        };
+        return stackTrace;
+    };
+
     //Execute fetch method and returns Promise as Fetch Respose type
     private useFetch = (requestUrl: string, requestInit: RequestInit): Promise<Response> => {
         return new Promise(async (resolve, reject) => {
+            const startTimestamp: string = new Date().toISOString();
+            let response;
+            let errorMessage;
+
             try {
-                const response = await fetch(requestUrl, requestInit);
+                response = await fetch(requestUrl, requestInit);
                 resolve(response);
             } catch (error) {
+                errorMessage = error;
                 reject(error);
+            } finally {
+                //generate stack trace call log
+                const stackTrace: StackTrace = this.generateStackTraceCallLog(requestUrl, requestInit, startTimestamp, response!, errorMessage);
+                //push stack trace call log
+                this.stackTraceLog.push(stackTrace);
             }
         });
     };
@@ -92,11 +120,14 @@ export default class API {
     //returns apiTypes outside the API class
     getApiTypes = (): ApiTypes => this.apiTypes;
 
+    //returns stackTraceLog outside the API class
+    getStackTraceLog = (): StackTrace[] => this.stackTraceLog;
+
     //execute Fetch call for REST API, from all params and configurations and returns Promise with CallResponse type
     call = (type: string, parameters?: ApiParameters): Promise<CallResponse> => {
         return new Promise(async (resolve, reject) => {
             try {
-                //define defaulte parameters to use if parameters weren't passed
+                //define default parameters to use if parameters weren't passed
                 const defaultParameters: ApiParametersInternal = { pathQueryParameters: [{ name: '', value: '' }], headers: {}, body: {} as BodyInit };
                 //define internal parameters to use in all methods
                 const internalParameters: ApiParametersInternal = {
