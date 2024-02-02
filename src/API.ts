@@ -46,6 +46,7 @@ export default class API {
             retryCondition: apiConstants.globalParams?.retryCondition || [],
             statusCodesActions: apiConstants.globalParams?.statusCodesActions || [],
             errorMessages: apiConstants.globalParams?.errorMessages || [],
+            stackTraceLogExtraParams: apiConstants.globalParams?.stackTraceLogExtraParams || {},
         };
         //initialize apiConstants as ApiConstantsInternal type
         this.apiConstants = { ...(apiConstants as ApiConstantsInternal), globalParams: internalGlobalParams };
@@ -74,24 +75,28 @@ export default class API {
                 ? api.statusCodesActions
                 : (generateGlobalArrayWithOverrides(globals.statusCodesActions, api.statusCodesActions) as StatusCodeAction[]),
             errorMessages: ignoreGlobalParams.includes('errorMessages') ? api.errorMessages : (generateGlobalArrayWithOverrides(globals.errorMessages, api.errorMessages) as ErrorMessage[]),
+            stackTraceLogExtraParams: ignoreGlobalParams.includes('stackTraceLogExtraParams') ? api.stackTraceLogExtraParams : { ...globals.stackTraceLogExtraParams, ...api.stackTraceLogExtraParams },
         };
 
         return result;
     };
 
     //generate stack trace call log
-    private generateStackTraceCallLog = (requestUrl: string, requestInit: RequestInit, startTimestamp: string, response: Response, errorMessage: unknown): Promise<StackTrace> => {
+    private generateStackTraceCallLog = (
+        requestUrl: string,
+        requestInit: RequestInit,
+        startTimestamp: string,
+        response: Response,
+        errorMessage: unknown,
+        stackTraceLogExtraParams: object
+    ): Promise<StackTrace> => {
         return new Promise(async (resolve, reject) => {
             try {
-                let responseBody;
+                let responseBody: BodyInit = '';
                 try {
-                    responseBody = await response.json();
+                    responseBody = await response.text();
                 } catch (error) {
-                    try {
-                        responseBody = await response.text();
-                    } catch (error) {
-                        console.warn(`api-engine call "${requestUrl}" without response body JSON or TEXT. Error: ${error}`);
-                    }
+                    console.warn('error getting response body for request:', error);
                 }
 
                 const stackTrace: StackTrace = {
@@ -101,9 +106,10 @@ export default class API {
                     requestHeaders: requestInit?.headers || {},
                     responseHeaders: response?.headers || {},
                     requestBody: requestInit?.body || '',
-                    responseBody: responseBody || {},
+                    responseBody: responseBody || '',
+                    responseStatusCode: response.status,
                     errorMessage,
-                    extraProperties: [], //TODO: handle with apiConstants config
+                    extraProperties: stackTraceLogExtraParams,
                 };
                 resolve(stackTrace);
             } catch (error) {
@@ -113,10 +119,10 @@ export default class API {
     };
 
     //Execute fetch method and returns Promise as Fetch Respose type
-    private useFetch = (requestUrl: string, requestInit: RequestInit): Promise<Response> => {
+    private useFetch = (requestUrl: string, requestInit: RequestInit, requestApi: EndpointInternal): Promise<Response> => {
         return new Promise(async (resolve, reject) => {
             const startTimestamp: string = new Date().toISOString();
-            let response;
+            let response: Response = new Response();
             let errorMessage;
 
             try {
@@ -127,7 +133,7 @@ export default class API {
                 reject(error);
             } finally {
                 //generate stack trace call log
-                const stackTrace: StackTrace = await this.generateStackTraceCallLog(requestUrl, requestInit, startTimestamp, response!, errorMessage);
+                const stackTrace: StackTrace = await this.generateStackTraceCallLog(requestUrl, requestInit, startTimestamp, response, errorMessage, requestApi.stackTraceLogExtraParams);
                 //push stack trace call log
                 this.stackTraceLog.push(stackTrace);
             }
@@ -162,7 +168,7 @@ export default class API {
                 const requestInit: RequestInit = this.generateRequest(requestApi, parameters);
 
                 //definition of useFetch method already configured with parameters to use in retries iterations
-                const useFetchCall = async (): Promise<Response> => await this.useFetch(requestUrl, requestInit);
+                const useFetchCall = async (): Promise<Response> => await this.useFetch(requestUrl, requestInit, requestApi);
                 //useFetch first call
                 const useFetchResponse = await useFetchCall();
 
@@ -174,7 +180,7 @@ export default class API {
 
                 //initialization of result as CallResponse
                 let result: CallResponse = {
-                    requestApi: { path: '', request: {}, retry: 0, retryCondition: [], ignoreGlobalParams: [], statusCodesActions: [], errorMessages: [] },
+                    requestApi: { path: '', request: {}, retry: 0, retryCondition: [], ignoreGlobalParams: [], statusCodesActions: [], errorMessages: [], stackTraceLogExtraParams: {} },
                     response: {} as Response,
                     retries: { quantity: 0, conditions: [] },
                     errorStatus: { isInError: false, errorCode: '', errorMessage: '' },
@@ -261,7 +267,7 @@ export default class API {
             try {
                 let resolved: boolean = false;
                 let result: CallResponse = {
-                    requestApi: { path: '', request: {}, retry: 0, retryCondition: [], ignoreGlobalParams: [], statusCodesActions: [], errorMessages: [] },
+                    requestApi: { path: '', request: {}, retry: 0, retryCondition: [], ignoreGlobalParams: [], statusCodesActions: [], errorMessages: [], stackTraceLogExtraParams: {} },
                     response: {} as Response,
                     retries: { quantity: 0, conditions: [] },
                     errorStatus: { isInError: false, errorCode: '', errorMessage: '' },

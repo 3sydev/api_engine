@@ -4,7 +4,7 @@ export type ApiTypes = {
     [key: string]: string;
 };
 
-export type IgnoreGlobalParam = 'request' | 'retry' | 'retryCondition' | 'statusCodesActions' | 'errorMessages';
+export type IgnoreGlobalParam = 'request' | 'retry' | 'retryCondition' | 'statusCodesActions' | 'errorMessages' | 'stackTraceLogExtraParams';
 
 export type StatusCodeAction = {
     statusCode: number;
@@ -27,6 +27,7 @@ type Endpoint = {
     ignoreGlobalParams?: IgnoreGlobalParam[];
     statusCodesActions?: StatusCodeAction[];
     errorMessages?: ErrorMessage[];
+    stackTraceLogExtraParams?: object;
 };
 
 export type EndpointInternal = {
@@ -37,6 +38,7 @@ export type EndpointInternal = {
     ignoreGlobalParams: IgnoreGlobalParam[];
     statusCodesActions: StatusCodeAction[];
     errorMessages: ErrorMessage[];
+    stackTraceLogExtraParams: object;
 };
 
 export type EndpointGlobal = {
@@ -45,6 +47,7 @@ export type EndpointGlobal = {
     retryCondition?: number[];
     statusCodesActions?: StatusCodeAction[];
     errorMessages?: ErrorMessage[];
+    stackTraceLogExtraParams?: object;
 };
 
 export type EndpointGlobalInternal = {
@@ -53,6 +56,7 @@ export type EndpointGlobalInternal = {
     retryCondition: number[];
     statusCodesActions: StatusCodeAction[];
     errorMessages: ErrorMessage[];
+    stackTraceLogExtraParams: object;
 };
 
 type Endpoints = {
@@ -120,6 +124,7 @@ export type StackTrace = {
     responseHeaders: Headers;
     requestBody: BodyInit;
     responseBody: BodyInit;
+    responseStatusCode: number;
     errorMessage: string | unknown;
-    extraProperties?: any[];
+    extraProperties: object;
 };
