@@ -65,14 +65,12 @@ type EndpointsInternal = {
 
 export type ApiConstants = {
     baseUrl: string;
-    enableStackTrace?: boolean; //TODO: handle in API class
     globalParams?: EndpointGlobal;
     endpoints: Endpoints;
 };
 
 export type ApiConstantsInternal = {
     baseUrl: string;
-    enableStackTrace: boolean;
     globalParams: EndpointGlobalInternal;
     endpoints: EndpointsInternal;
 };
