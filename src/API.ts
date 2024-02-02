@@ -80,19 +80,36 @@ export default class API {
     };
 
     //generate stack trace call log
-    private generateStackTraceCallLog = (requestUrl: string, requestInit: RequestInit, startTimestamp: string, response: Response, errorMessage: unknown): StackTrace => {
-        const stackTrace: StackTrace = {
-            startTimestamp,
-            endTimestamp: new Date().toISOString(),
-            requestUrl,
-            requestHeaders: requestInit?.headers || {},
-            responseHeaders: response?.headers || {},
-            requestBody: requestInit?.body || '',
-            responseBody: response?.body || {},
-            errorMessage: errorMessage,
-            extraProperties: [], //TODO: handle with apiConstants config
-        };
-        return stackTrace;
+    private generateStackTraceCallLog = (requestUrl: string, requestInit: RequestInit, startTimestamp: string, response: Response, errorMessage: unknown): Promise<StackTrace> => {
+        return new Promise(async (resolve, reject) => {
+            try {
+                let responseBody;
+                try {
+                    responseBody = await response.json();
+                } catch (error) {
+                    try {
+                        responseBody = await response.text();
+                    } catch (error) {
+                        console.warn(`api-engine call "${requestUrl}" without response body JSON or TEXT. Error: ${error}`);
+                    }
+                }
+
+                const stackTrace: StackTrace = {
+                    startTimestamp,
+                    endTimestamp: new Date().toISOString(),
+                    requestUrl,
+                    requestHeaders: requestInit?.headers || {},
+                    responseHeaders: response?.headers || {},
+                    requestBody: requestInit?.body || '',
+                    responseBody: responseBody || {},
+                    errorMessage,
+                    extraProperties: [], //TODO: handle with apiConstants config
+                };
+                resolve(stackTrace);
+            } catch (error) {
+                reject(error);
+            }
+        });
     };
 
     //Execute fetch method and returns Promise as Fetch Respose type
@@ -110,7 +127,7 @@ export default class API {
                 reject(error);
             } finally {
                 //generate stack trace call log
-                const stackTrace: StackTrace = this.generateStackTraceCallLog(requestUrl, requestInit, startTimestamp, response!, errorMessage);
+                const stackTrace: StackTrace = await this.generateStackTraceCallLog(requestUrl, requestInit, startTimestamp, response!, errorMessage);
                 //push stack trace call log
                 this.stackTraceLog.push(stackTrace);
             }
