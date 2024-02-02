@@ -109,9 +109,15 @@ export type ErrorStatus = {
     errorMessage: string;
 };
 
+export type UseFetchResponse = {
+    response: Response;
+    responseBody: BodyInit;
+};
+
 export type CallResponse = {
     requestApi: EndpointInternal;
     response: Response;
+    responseBody: BodyInit;
     retries: Retries;
     errorStatus: ErrorStatus;
 };

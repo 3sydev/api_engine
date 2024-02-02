@@ -13,6 +13,7 @@ import {
     PathQueryParameters,
     StackTrace,
     StatusCodeAction,
+    UseFetchResponse,
 } from './types';
 import fetch, { BodyInit, RequestInit, Response } from 'node-fetch';
 import { generateGlobalArrayWithOverrides } from './utils';
@@ -87,53 +88,48 @@ export default class API {
         requestInit: RequestInit,
         startTimestamp: string,
         response: Response,
+        responseBody: BodyInit,
         errorMessage: unknown,
         stackTraceLogExtraParams: object
-    ): Promise<StackTrace> => {
-        return new Promise(async (resolve, reject) => {
-            try {
-                let responseBody: BodyInit = '';
-                try {
-                    responseBody = await response.text();
-                } catch (error) {
-                    console.warn('error getting response body for request:', error);
-                }
-
-                const stackTrace: StackTrace = {
-                    startTimestamp,
-                    endTimestamp: new Date().toISOString(),
-                    requestUrl,
-                    requestHeaders: requestInit?.headers || {},
-                    responseHeaders: response?.headers || {},
-                    requestBody: requestInit?.body || '',
-                    responseBody: responseBody || '',
-                    responseStatusCode: response.status,
-                    errorMessage,
-                    extraProperties: stackTraceLogExtraParams,
-                };
-                resolve(stackTrace);
-            } catch (error) {
-                reject(error);
-            }
-        });
+    ): StackTrace => {
+        const stackTrace: StackTrace = {
+            startTimestamp,
+            endTimestamp: new Date().toISOString(),
+            requestUrl,
+            requestHeaders: requestInit?.headers || {},
+            responseHeaders: response?.headers || {},
+            requestBody: requestInit?.body || '',
+            responseBody: responseBody || '',
+            responseStatusCode: response.status,
+            errorMessage,
+            extraProperties: stackTraceLogExtraParams,
+        };
+        return stackTrace;
     };
 
     //Execute fetch method and returns Promise as Fetch Respose type
-    private useFetch = (requestUrl: string, requestInit: RequestInit, requestApi: EndpointInternal): Promise<Response> => {
+    private useFetch = (requestUrl: string, requestInit: RequestInit, requestApi: EndpointInternal): Promise<UseFetchResponse> => {
         return new Promise(async (resolve, reject) => {
             const startTimestamp: string = new Date().toISOString();
             let response: Response = new Response();
+            let responseBody: BodyInit = '';
             let errorMessage;
 
             try {
                 response = await fetch(requestUrl, requestInit);
-                resolve(response);
+                try {
+                    responseBody = await response.text();
+                } catch (error) {
+                    console.warn('error getting response body for request:', error);
+                } finally {
+                    resolve({ response, responseBody });
+                }
             } catch (error) {
                 errorMessage = error;
                 reject(error);
             } finally {
                 //generate stack trace call log
-                const stackTrace: StackTrace = await this.generateStackTraceCallLog(requestUrl, requestInit, startTimestamp, response, errorMessage, requestApi.stackTraceLogExtraParams);
+                const stackTrace: StackTrace = this.generateStackTraceCallLog(requestUrl, requestInit, startTimestamp, response, responseBody, errorMessage, requestApi.stackTraceLogExtraParams);
                 //push stack trace call log
                 this.stackTraceLog.push(stackTrace);
             }
@@ -168,20 +164,21 @@ export default class API {
                 const requestInit: RequestInit = this.generateRequest(requestApi, parameters);
 
                 //definition of useFetch method already configured with parameters to use in retries iterations
-                const useFetchCall = async (): Promise<Response> => await this.useFetch(requestUrl, requestInit, requestApi);
+                const useFetchCall = async (): Promise<UseFetchResponse> => await this.useFetch(requestUrl, requestInit, requestApi);
                 //useFetch first call
-                const useFetchResponse = await useFetchCall();
+                const { response, responseBody } = await useFetchCall();
 
                 //execute actions by status code received from useFetch call
-                await this.executeActionOnStatusCode(requestApi, useFetchResponse.status);
+                await this.executeActionOnStatusCode(requestApi, response.status);
 
                 //check if there's condition to make retries
-                const retryCondition: boolean = this.retryCondition(requestApi, useFetchResponse.status);
+                const retryCondition: boolean = this.retryCondition(requestApi, response.status);
 
                 //initialization of result as CallResponse
                 let result: CallResponse = {
                     requestApi: { path: '', request: {}, retry: 0, retryCondition: [], ignoreGlobalParams: [], statusCodesActions: [], errorMessages: [], stackTraceLogExtraParams: {} },
                     response: {} as Response,
+                    responseBody: '',
                     retries: { quantity: 0, conditions: [] },
                     errorStatus: { isInError: false, errorCode: '', errorMessage: '' },
                 };
@@ -190,7 +187,13 @@ export default class API {
                     result = await this.manageRetry(requestApi, useFetchCall);
                 } else {
                     //else will be set the result with first useFetch call data
-                    result = { requestApi, response: useFetchResponse, retries: { quantity: 0, conditions: [] }, errorStatus: await this.generateErrorStatus(requestApi, useFetchResponse.status) };
+                    result = {
+                        requestApi,
+                        response: response,
+                        responseBody: responseBody,
+                        retries: { quantity: 0, conditions: [] },
+                        errorStatus: await this.generateErrorStatus(requestApi, response.status),
+                    };
                 }
 
                 //resolve without errors
@@ -262,13 +265,14 @@ export default class API {
     };
 
     //handle retries with iteration of the quantity configured, the loop ends if the status code is ok
-    private manageRetry = (requestApi: EndpointInternal, useFetchCall: () => Promise<Response>): Promise<CallResponse> => {
+    private manageRetry = (requestApi: EndpointInternal, useFetchCall: () => Promise<UseFetchResponse>): Promise<CallResponse> => {
         return new Promise(async (resolve, reject) => {
             try {
                 let resolved: boolean = false;
                 let result: CallResponse = {
                     requestApi: { path: '', request: {}, retry: 0, retryCondition: [], ignoreGlobalParams: [], statusCodesActions: [], errorMessages: [], stackTraceLogExtraParams: {} },
                     response: {} as Response,
+                    responseBody: '',
                     retries: { quantity: 0, conditions: [] },
                     errorStatus: { isInError: false, errorCode: '', errorMessage: '' },
                 };
@@ -281,7 +285,7 @@ export default class API {
                 for (let i = 0; i < numberOfRetry; i++) {
                     if (!resolved) {
                         try {
-                            const response = await useFetchCall();
+                            const { response, responseBody } = await useFetchCall();
                             retriedTimes++;
                             retriedConditions.push(response.status);
 
@@ -290,6 +294,7 @@ export default class API {
                             result = {
                                 requestApi,
                                 response,
+                                responseBody,
                                 retries: { quantity: retriedTimes, conditions: retriedConditions },
                                 errorStatus: await this.generateErrorStatus(requestApi, response.status),
                             };
