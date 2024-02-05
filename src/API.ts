@@ -38,6 +38,7 @@ export default class API {
                 ignoreGlobalParams: endpoint.ignoreGlobalParams || [],
                 statusCodesActions: endpoint.statusCodesActions || [],
                 errorMessages: endpoint.errorMessages || [],
+                stackTraceLogExtraParams: endpoint.stackTraceLogExtraParams || {},
             } as EndpointInternal;
         });
         //remap globalParams as EndpointGlobalInternal type
@@ -96,9 +97,9 @@ export default class API {
             startTimestamp,
             endTimestamp: new Date().toISOString(),
             requestUrl,
-            requestHeaders: requestInit?.headers || {},
-            responseHeaders: response?.headers || {},
-            requestBody: requestInit?.body || '',
+            requestHeaders: requestInit.headers!,
+            responseHeaders: response.headers,
+            requestBody: requestInit.body || '',
             responseBody: responseBody || '',
             responseStatusCode: response.status,
             errorMessage,

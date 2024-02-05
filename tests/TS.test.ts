@@ -4,6 +4,7 @@ import apiConstantsTs, { resetStatusCodeActionsExecutions, statusCodeActionsExec
 import apiConstantsTsGlobal, { resetStatusCodeActionsExecutionsGlobals, statusCodeActionsExecutionsGlobals } from './mocks/mock_ts_globals';
 import apiConstantsTsGlobalNoParams from './mocks/mock_ts_globals_no_params';
 import apiConstantsTsGlobalSomeParams from './mocks/mock_ts_globals_some_params';
+import apiConstantsTsStackTrace from './mocks/mock_ts_stack_trace';
 import { FetchError, HeaderInit } from 'node-fetch';
 
 const api = new APIEngine(apiConstantsTs);
@@ -489,15 +490,149 @@ describe('TypeScript tests', () => {
     });
 
     describe('Stack Trace tests', () => {
-        //TODO: indentify test cases
-        test('first stack trace test', async () => {
-            expect.assertions(1);
+        test('No extra params', async () => {
+            expect.assertions(11);
 
+            const api = new APIEngine(apiConstantsTsStackTrace);
+            const apiTypes = api.getApiTypes();
             const res = await api.call(apiTypes.getResources);
 
             expect(res.response.status).toEqual<number>(200);
+            const stackTraceLog = api.getStackTraceLog();
+            const lastStackTraceLog = stackTraceLog[stackTraceLog.length - 1];
+            expect(lastStackTraceLog.startTimestamp).toBeTruthy();
+            expect(lastStackTraceLog.endTimestamp).toBeTruthy();
+            expect(lastStackTraceLog.requestUrl).toEqual(res.response.url);
+            expect(lastStackTraceLog.requestHeaders).toEqual(res.requestApi.request.headers || {});
+            expect(lastStackTraceLog.responseHeaders).toEqual(res.response.headers);
+            expect(lastStackTraceLog.requestBody).toEqual(res.requestApi.request.body || '');
+            expect(lastStackTraceLog.responseBody).toEqual(res.responseBody);
+            expect(lastStackTraceLog.responseStatusCode).toEqual(res.response.status);
+            expect(lastStackTraceLog.errorMessage).toBeUndefined();
+            expect(lastStackTraceLog.extraProperties).toEqual({});
+        });
 
-            // expect(api.getStackTraceLog())
+        test('Only global extra params', async () => {
+            expect.assertions(11);
+
+            const api = new APIEngine(apiConstantsTsStackTrace);
+            const apiTypes = api.getApiTypes();
+            const res = await api.call(apiTypes.getResourcesOnlyGlobalExtraParams);
+
+            expect(res.response.status).toEqual<number>(200);
+            const stackTraceLog = api.getStackTraceLog();
+            const lastStackTraceLog = stackTraceLog[stackTraceLog.length - 1];
+            expect(lastStackTraceLog.startTimestamp).toBeTruthy();
+            expect(lastStackTraceLog.endTimestamp).toBeTruthy();
+            expect(lastStackTraceLog.requestUrl).toEqual(res.response.url);
+            expect(lastStackTraceLog.requestHeaders).toEqual(res.requestApi.request.headers || {});
+            expect(lastStackTraceLog.responseHeaders).toEqual(res.response.headers);
+            expect(lastStackTraceLog.requestBody).toEqual(res.requestApi.request.body || '');
+            expect(lastStackTraceLog.responseBody).toEqual(res.responseBody);
+            expect(lastStackTraceLog.responseStatusCode).toEqual(res.response.status);
+            expect(lastStackTraceLog.errorMessage).toBeUndefined();
+            expect(lastStackTraceLog.extraProperties).toEqual({
+                text: 'Text',
+                number: 1,
+            });
+        });
+
+        test('Only endpoint extra params', async () => {
+            expect.assertions(11);
+
+            const api = new APIEngine(apiConstantsTsStackTrace);
+            const apiTypes = api.getApiTypes();
+            const res = await api.call(apiTypes.getResourcesOnlyEndpointExtraParams);
+
+            expect(res.response.status).toEqual<number>(200);
+            const stackTraceLog = api.getStackTraceLog();
+            const lastStackTraceLog = stackTraceLog[stackTraceLog.length - 1];
+            expect(lastStackTraceLog.startTimestamp).toBeTruthy();
+            expect(lastStackTraceLog.endTimestamp).toBeTruthy();
+            expect(lastStackTraceLog.requestUrl).toEqual(res.response.url);
+            expect(lastStackTraceLog.requestHeaders).toEqual(res.requestApi.request.headers || {});
+            expect(lastStackTraceLog.responseHeaders).toEqual(res.response.headers);
+            expect(lastStackTraceLog.requestBody).toEqual(res.requestApi.request.body || '');
+            expect(lastStackTraceLog.responseBody).toEqual(res.responseBody);
+            expect(lastStackTraceLog.responseStatusCode).toEqual(res.response.status);
+            expect(lastStackTraceLog.errorMessage).toBeUndefined();
+            expect(lastStackTraceLog.extraProperties).toEqual({
+                text1: 'Text1',
+                number: 2,
+            });
+        });
+
+        test('Global and endpoint extra params', async () => {
+            expect.assertions(11);
+
+            const api = new APIEngine(apiConstantsTsStackTrace);
+            const apiTypes = api.getApiTypes();
+            const res = await api.call(apiTypes.getResourcesOnlyGlobalAndEndpointExtraParams);
+
+            expect(res.response.status).toEqual<number>(200);
+            const stackTraceLog = api.getStackTraceLog();
+            const lastStackTraceLog = stackTraceLog[stackTraceLog.length - 1];
+            expect(lastStackTraceLog.startTimestamp).toBeTruthy();
+            expect(lastStackTraceLog.endTimestamp).toBeTruthy();
+            expect(lastStackTraceLog.requestUrl).toEqual(res.response.url);
+            expect(lastStackTraceLog.requestHeaders).toEqual(res.requestApi.request.headers || {});
+            expect(lastStackTraceLog.responseHeaders).toEqual(res.response.headers);
+            expect(lastStackTraceLog.requestBody).toEqual(res.requestApi.request.body || '');
+            expect(lastStackTraceLog.responseBody).toEqual(res.responseBody);
+            expect(lastStackTraceLog.responseStatusCode).toEqual(res.response.status);
+            expect(lastStackTraceLog.errorMessage).toBeUndefined();
+            expect(lastStackTraceLog.extraProperties).toEqual({
+                text: 'Text',
+                number: 1,
+                text1: 'Text1',
+                number1: 2,
+            });
+        });
+
+        test('With request and response body', async () => {
+            expect.assertions(11);
+
+            const api = new APIEngine(apiConstantsTsStackTrace);
+            const apiTypes = api.getApiTypes();
+            const res = await api.call(apiTypes.getResourcesRequestBody);
+
+            expect(res.response.status).toEqual<number>(201);
+            const stackTraceLog = api.getStackTraceLog();
+            const lastStackTraceLog = stackTraceLog[stackTraceLog.length - 1];
+            expect(lastStackTraceLog.startTimestamp).toBeTruthy();
+            expect(lastStackTraceLog.endTimestamp).toBeTruthy();
+            expect(lastStackTraceLog.requestUrl).toEqual(res.response.url);
+            expect(lastStackTraceLog.requestHeaders).toEqual(res.requestApi.request.headers || {});
+            expect(lastStackTraceLog.responseHeaders).toEqual(res.response.headers);
+            expect(lastStackTraceLog.requestBody).toEqual(res.requestApi.request.body || '');
+            expect(lastStackTraceLog.responseBody).toEqual(res.responseBody);
+            expect(lastStackTraceLog.responseStatusCode).toEqual(res.response.status);
+            expect(lastStackTraceLog.errorMessage).toBeUndefined();
+            expect(lastStackTraceLog.extraProperties).toEqual({});
+        });
+
+        test('With response error', async () => {
+            expect.assertions(10);
+
+            const api = new APIEngine(apiConstantsTsStackTrace);
+            const apiTypes = api.getApiTypes();
+
+            try {
+                await api.call(apiTypes.getResourcesError);
+            } catch (error) {
+                const stackTraceLog = api.getStackTraceLog();
+                const lastStackTraceLog = stackTraceLog[stackTraceLog.length - 1];
+                expect(lastStackTraceLog.startTimestamp).toBeTruthy();
+                expect(lastStackTraceLog.endTimestamp).toBeTruthy();
+                expect(lastStackTraceLog.requestUrl).toEqual('https://jsonplaceholder.typicode.com/posts');
+                expect(lastStackTraceLog.requestHeaders).toEqual({});
+                expect(lastStackTraceLog.responseHeaders).toBeDefined();
+                expect(lastStackTraceLog.requestBody).toEqual('{"test":"Test"}');
+                expect(lastStackTraceLog.responseBody).toEqual('');
+                expect(lastStackTraceLog.responseStatusCode).toEqual(200);
+                expect(lastStackTraceLog.errorMessage).toStrictEqual(new TypeError('Request with GET/HEAD method cannot have body'));
+                expect(lastStackTraceLog.extraProperties).toEqual({});
+            }
         });
     });
 });
