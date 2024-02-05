@@ -189,8 +189,8 @@ export default class API {
                     //else will be set the result with first useFetch call data
                     result = {
                         requestApi,
-                        response: response,
-                        responseBody: responseBody,
+                        response,
+                        responseBody,
                         retries: { quantity: 0, conditions: [] },
                         errorStatus: await this.generateErrorStatus(requestApi, response.status),
                     };
