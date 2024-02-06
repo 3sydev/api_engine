@@ -4,7 +4,7 @@ export type ApiTypes = {
     [key: string]: string;
 };
 
-export type IgnoreGlobalParam = 'request' | 'retry' | 'retryCondition' | 'statusCodesActions' | 'errorMessages' | 'stackTraceLogExtraParams';
+export type IgnoreGlobalParam = 'request' | 'retry' | 'retryCondition' | 'statusCodesActions' | 'errorMessages' | 'stackTraceLogExtraParams' | 'requestInterceptor' | 'responseInterceptor';
 
 export type StatusCodeAction = {
     statusCode: number;
@@ -19,7 +19,10 @@ export type ErrorMessage = {
     action?: Function;
 };
 
-type Endpoint = {
+export type RequestInterceptor = (endpoint: Endpoint) => Endpoint;
+export type ResponseInterceptor = (response: CallResponse) => any;
+
+export type Endpoint = {
     path: string;
     request?: RequestInit;
     retry?: number | 0;
@@ -28,6 +31,8 @@ type Endpoint = {
     statusCodesActions?: StatusCodeAction[];
     errorMessages?: ErrorMessage[];
     stackTraceLogExtraParams?: object;
+    requestInterceptor?: RequestInterceptor;
+    responseInterceptor?: ResponseInterceptor;
 };
 
 export type EndpointInternal = {
@@ -39,6 +44,8 @@ export type EndpointInternal = {
     statusCodesActions: StatusCodeAction[];
     errorMessages: ErrorMessage[];
     stackTraceLogExtraParams: object;
+    requestInterceptor: RequestInterceptor;
+    responseInterceptor: ResponseInterceptor;
 };
 
 export type EndpointGlobal = {
@@ -48,6 +55,8 @@ export type EndpointGlobal = {
     statusCodesActions?: StatusCodeAction[];
     errorMessages?: ErrorMessage[];
     stackTraceLogExtraParams?: object;
+    requestInterceptor?: RequestInterceptor;
+    responseInterceptor?: ResponseInterceptor;
 };
 
 export type EndpointGlobalInternal = {
@@ -57,6 +66,8 @@ export type EndpointGlobalInternal = {
     statusCodesActions: StatusCodeAction[];
     errorMessages: ErrorMessage[];
     stackTraceLogExtraParams: object;
+    requestInterceptor: RequestInterceptor;
+    responseInterceptor: ResponseInterceptor;
 };
 
 type Endpoints = {

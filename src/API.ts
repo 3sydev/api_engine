@@ -5,6 +5,7 @@ import {
     ApiParametersInternal,
     ApiTypes,
     CallResponse,
+    Endpoint,
     EndpointGlobalInternal,
     EndpointInternal,
     ErrorMessage,
@@ -16,8 +17,27 @@ import {
     UseFetchResponse,
 } from './types';
 import fetch, { BodyInit, RequestInit, Response } from 'node-fetch';
-import { generateGlobalArrayWithOverrides } from './utils';
+import { generateGlobalArrayWithOverrides, mergeRequestInterceptorsMethods, mergeResponseInterceptorsMethods } from './utils';
 
+const defaultRequestApi: EndpointInternal = {
+    path: '',
+    request: {},
+    retry: 0,
+    retryCondition: [],
+    ignoreGlobalParams: [],
+    statusCodesActions: [],
+    errorMessages: [],
+    stackTraceLogExtraParams: {},
+    requestInterceptor: (endpoint: Endpoint) => endpoint,
+    responseInterceptor: () => {},
+};
+const defaultResponse: CallResponse = {
+    requestApi: defaultRequestApi,
+    response: {} as Response,
+    responseBody: '',
+    retries: { quantity: 0, conditions: [] },
+    errorStatus: { isInError: false, errorCode: '', errorMessage: '' },
+};
 export default class API {
     private apiConstants: ApiConstantsInternal;
     private apiTypes: ApiTypes;
@@ -39,6 +59,8 @@ export default class API {
                 statusCodesActions: endpoint.statusCodesActions || [],
                 errorMessages: endpoint.errorMessages || [],
                 stackTraceLogExtraParams: endpoint.stackTraceLogExtraParams || {},
+                requestInterceptor: endpoint.requestInterceptor || ((endpoint: Endpoint) => endpoint),
+                responseInterceptor: endpoint.responseInterceptor || (() => {}),
             } as EndpointInternal;
         });
         //remap globalParams as EndpointGlobalInternal type
@@ -49,6 +71,8 @@ export default class API {
             statusCodesActions: apiConstants.globalParams?.statusCodesActions || [],
             errorMessages: apiConstants.globalParams?.errorMessages || [],
             stackTraceLogExtraParams: apiConstants.globalParams?.stackTraceLogExtraParams || {},
+            requestInterceptor: apiConstants.globalParams?.requestInterceptor || ((endpoint: Endpoint) => endpoint),
+            responseInterceptor: apiConstants.globalParams?.responseInterceptor || (() => {}),
         };
         //initialize apiConstants as ApiConstantsInternal type
         this.apiConstants = { ...(apiConstants as ApiConstantsInternal), globalParams: internalGlobalParams };
@@ -56,13 +80,31 @@ export default class API {
         this.apiTypes = Object.keys(this.apiConstants.endpoints).reduce((o, key) => ({ ...o, [key]: key }), {});
     }
 
+    //generate new api based on requestInterceptor
+    private generateApiBasedOnRequestInterceptor = (api: EndpointInternal): EndpointInternal => {
+        const globals = this.apiConstants.globalParams;
+        const ignoreGlobalParams: IgnoreGlobalParam[] = api.ignoreGlobalParams;
+
+        const newApi = {
+            ...api,
+            ...(ignoreGlobalParams.includes('requestInterceptor') ? api.requestInterceptor(api) : mergeRequestInterceptorsMethods([globals.requestInterceptor, api.requestInterceptor])(api)),
+        };
+
+        return newApi;
+    };
+
     //returns endpoint from property string as EndpointInternal type
     private getApi = (type: string): EndpointInternal => {
         const apis = this.apiConstants.endpoints;
         const globals = this.apiConstants.globalParams;
-        const api = apis[type];
 
-        if (!api) throw new Error('Api type not defined');
+        const _api = apis[type];
+
+        if (!_api) throw new Error('Api type not defined');
+
+        //overwrite api with requestInterceptor
+        const api = this.generateApiBasedOnRequestInterceptor(_api);
+
         if (Object.keys(api.request).length === 0 && Object.keys(globals.request).length === 0) throw new Error('Request parameter not defined');
 
         const ignoreGlobalParams: IgnoreGlobalParam[] = api.ignoreGlobalParams;
@@ -78,6 +120,10 @@ export default class API {
                 : (generateGlobalArrayWithOverrides(globals.statusCodesActions, api.statusCodesActions) as StatusCodeAction[]),
             errorMessages: ignoreGlobalParams.includes('errorMessages') ? api.errorMessages : (generateGlobalArrayWithOverrides(globals.errorMessages, api.errorMessages) as ErrorMessage[]),
             stackTraceLogExtraParams: ignoreGlobalParams.includes('stackTraceLogExtraParams') ? api.stackTraceLogExtraParams : { ...globals.stackTraceLogExtraParams, ...api.stackTraceLogExtraParams },
+            requestInterceptor: ignoreGlobalParams.includes('requestInterceptor') ? api.requestInterceptor : mergeRequestInterceptorsMethods([globals.requestInterceptor, api.requestInterceptor]),
+            responseInterceptor: ignoreGlobalParams.includes('responseInterceptor')
+                ? api.responseInterceptor
+                : mergeResponseInterceptorsMethods([globals.responseInterceptor, api.responseInterceptor]),
         };
 
         return result;
@@ -176,13 +222,7 @@ export default class API {
                 const retryCondition: boolean = this.retryCondition(requestApi, response.status);
 
                 //initialization of result as CallResponse
-                let result: CallResponse = {
-                    requestApi: { path: '', request: {}, retry: 0, retryCondition: [], ignoreGlobalParams: [], statusCodesActions: [], errorMessages: [], stackTraceLogExtraParams: {} },
-                    response: {} as Response,
-                    responseBody: '',
-                    retries: { quantity: 0, conditions: [] },
-                    errorStatus: { isInError: false, errorCode: '', errorMessage: '' },
-                };
+                let result: CallResponse = defaultResponse;
                 if (retryCondition) {
                     //if there's retryCondition will start the retries
                     result = await this.manageRetry(requestApi, useFetchCall);
@@ -196,6 +236,7 @@ export default class API {
                         errorStatus: await this.generateErrorStatus(requestApi, response.status),
                     };
                 }
+                await requestApi.responseInterceptor(result);
 
                 //resolve without errors
                 resolve(result);
@@ -270,13 +311,7 @@ export default class API {
         return new Promise(async (resolve, reject) => {
             try {
                 let resolved: boolean = false;
-                let result: CallResponse = {
-                    requestApi: { path: '', request: {}, retry: 0, retryCondition: [], ignoreGlobalParams: [], statusCodesActions: [], errorMessages: [], stackTraceLogExtraParams: {} },
-                    response: {} as Response,
-                    responseBody: '',
-                    retries: { quantity: 0, conditions: [] },
-                    errorStatus: { isInError: false, errorCode: '', errorMessage: '' },
-                };
+                let result: CallResponse = defaultResponse;
                 const numberOfRetry = requestApi.retry;
                 if (numberOfRetry < 1) throw new Error('"retry" parameter < 1');
 
