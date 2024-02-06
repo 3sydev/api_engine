@@ -4,6 +4,7 @@ import apiConstantsJsGlobal, { resetStatusCodeActionsExecutionsGlobals, statusCo
 import apiConstantsJsGlobalNoParams from './mocks/mock_js_globals_no_params';
 import apiConstantsJsGlobalSomeParams from './mocks/mock_js_globals_some_params';
 import apiConstantsJsStackTrace from './mocks/mock_js_stack_trace';
+import apiConstantsJsInterceptors, { responseInterceptorData, resetResponseInterceptorData } from './mocks/mock_js_interceptors';
 import { FetchError } from 'node-fetch';
 
 const api = new APIEngine(apiConstantsJs);
@@ -635,6 +636,70 @@ describe('JavaScript tests', () => {
                 expect(lastStackTraceLog.responseStatusCode).toEqual(200);
                 expect(lastStackTraceLog.errorMessage).toStrictEqual(new TypeError('Request with GET/HEAD method cannot have body'));
                 expect(lastStackTraceLog.extraProperties).toEqual({});
+            }
+        });
+    });
+
+    describe('Interceptors tests', () => {
+        beforeEach(resetResponseInterceptorData);
+
+        test('Only global interceptors', async () => {
+            expect.assertions(4);
+
+            const api = new APIEngine(apiConstantsJsInterceptors);
+            const apiTypes = api.getApiTypes();
+            const res = await api.call(apiTypes.getResourcesOnlyGlobalInterceptors);
+
+            expect(res.response.status).toEqual(200);
+            expect(res.requestApi.path).toEqual('/posts/1');
+            expect(res.response.url).toEqual('https://jsonplaceholder.typicode.com/posts/1');
+            expect(responseInterceptorData).toEqual({ statusCode: res.response.status, responseBody: res.responseBody });
+        });
+
+        test('Only endpoint interceptors', async () => {
+            expect.assertions(4);
+
+            const api = new APIEngine(apiConstantsJsInterceptors);
+            const apiTypes = api.getApiTypes();
+            const res = await api.call(apiTypes.getResourcesOnlyEndpointInterceptors);
+
+            expect(res.response.status).toEqual(200);
+            expect(res.requestApi.path).toEqual('/posts/2');
+            expect(res.response.url).toEqual('https://jsonplaceholder.typicode.com/posts/2');
+            expect(responseInterceptorData).toEqual({ statusCode: res.response.status, responseBody: res.responseBody });
+        });
+
+        test('Global and endpoint interceptors', async () => {
+            expect.assertions(5);
+
+            const api = new APIEngine(apiConstantsJsInterceptors);
+            const apiTypes = api.getApiTypes();
+            const res = await api.call(apiTypes.getResourcesGlobalAndEndpointInterceptors);
+
+            expect(res.response.status).toEqual(200);
+            expect(res.requestApi.path).toEqual('/posts/1');
+            expect(res.response.url).toEqual('https://jsonplaceholder.typicode.com/posts/1');
+            expect(res.requestApi.retry).toEqual(1);
+            expect(responseInterceptorData).toEqual({ statusCode: res.response.status, responseBody: res.responseBody, retry: res.requestApi.retry });
+        });
+
+        test('With throw error on responseInterceptor', async () => {
+            expect.assertions(2);
+
+            const api = new APIEngine(apiConstantsJsInterceptors);
+            const apiTypes = api.getApiTypes();
+
+            try {
+                await api.call(apiTypes.getResourcesWithErrorInterceptors);
+            } catch (error) {
+                expect({ ...responseInterceptorData, responseBody: JSON.parse(responseInterceptorData.responseBody.toString()) }).toEqual({
+                    statusCode: 200,
+                    responseBody: JSON.parse(
+                        '{"userId": 1,"id": 1,"title": "sunt aut facere repellat provident occaecati excepturi optio reprehenderit","body": "quia et suscipit\\nsuscipit recusandae consequuntur expedita et cum\\nreprehenderit molestiae ut ut quas totam\\nnostrum rerum est autem sunt rem eveniet architecto"}'
+                    ),
+                    retry: 0,
+                });
+                expect(error).toStrictEqual(new Error('Error on responseInterceptor'));
             }
         });
     });
