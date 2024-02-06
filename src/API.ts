@@ -8,16 +8,13 @@ import {
     Endpoint,
     EndpointGlobalInternal,
     EndpointInternal,
-    ErrorMessage,
-    ErrorStatus,
     IgnoreGlobalParam,
     PathQueryParameters,
     StackTrace,
-    StatusCodeAction,
     UseFetchResponse,
 } from './types';
 import fetch, { BodyInit, RequestInit, Response } from 'node-fetch';
-import { generateGlobalArrayWithOverrides, mergeRequestInterceptorsMethods, mergeResponseInterceptorsMethods } from './utils';
+import { mergeRequestInterceptorsMethods, mergeResponseInterceptorsMethods } from './utils';
 
 const defaultRequestApi: EndpointInternal = {
     path: '',
@@ -25,8 +22,6 @@ const defaultRequestApi: EndpointInternal = {
     retry: 0,
     retryCondition: [],
     ignoreGlobalParams: [],
-    statusCodesActions: [],
-    errorMessages: [],
     stackTraceLogExtraParams: {},
     requestInterceptor: (endpoint: Endpoint) => endpoint,
     responseInterceptor: () => {},
@@ -36,7 +31,6 @@ const defaultResponse: CallResponse = {
     response: {} as Response,
     responseBody: '',
     retries: { quantity: 0, conditions: [] },
-    errorStatus: { isInError: false, errorCode: '', errorMessage: '' },
 };
 export default class API {
     private apiConstants: ApiConstantsInternal;
@@ -56,8 +50,6 @@ export default class API {
                 retry: endpoint.retry || 0,
                 retryCondition: endpoint.retryCondition || [],
                 ignoreGlobalParams: endpoint.ignoreGlobalParams || [],
-                statusCodesActions: endpoint.statusCodesActions || [],
-                errorMessages: endpoint.errorMessages || [],
                 stackTraceLogExtraParams: endpoint.stackTraceLogExtraParams || {},
                 requestInterceptor: endpoint.requestInterceptor || ((endpoint: Endpoint) => endpoint),
                 responseInterceptor: endpoint.responseInterceptor || (() => {}),
@@ -68,8 +60,6 @@ export default class API {
             request: apiConstants.globalParams?.request || {},
             retry: apiConstants.globalParams?.retry || 0,
             retryCondition: apiConstants.globalParams?.retryCondition || [],
-            statusCodesActions: apiConstants.globalParams?.statusCodesActions || [],
-            errorMessages: apiConstants.globalParams?.errorMessages || [],
             stackTraceLogExtraParams: apiConstants.globalParams?.stackTraceLogExtraParams || {},
             requestInterceptor: apiConstants.globalParams?.requestInterceptor || ((endpoint: Endpoint) => endpoint),
             responseInterceptor: apiConstants.globalParams?.responseInterceptor || (() => {}),
@@ -115,10 +105,6 @@ export default class API {
             retry: ignoreGlobalParams.includes('retry') ? api.retry : api.retry || globals.retry || 0,
             retryCondition: ignoreGlobalParams.includes('retryCondition') ? api.retryCondition : [...globals.retryCondition, ...api.retryCondition],
             ignoreGlobalParams: ignoreGlobalParams,
-            statusCodesActions: ignoreGlobalParams.includes('statusCodesActions')
-                ? api.statusCodesActions
-                : (generateGlobalArrayWithOverrides(globals.statusCodesActions, api.statusCodesActions) as StatusCodeAction[]),
-            errorMessages: ignoreGlobalParams.includes('errorMessages') ? api.errorMessages : (generateGlobalArrayWithOverrides(globals.errorMessages, api.errorMessages) as ErrorMessage[]),
             stackTraceLogExtraParams: ignoreGlobalParams.includes('stackTraceLogExtraParams') ? api.stackTraceLogExtraParams : { ...globals.stackTraceLogExtraParams, ...api.stackTraceLogExtraParams },
             requestInterceptor: ignoreGlobalParams.includes('requestInterceptor') ? api.requestInterceptor : mergeRequestInterceptorsMethods([globals.requestInterceptor, api.requestInterceptor]),
             responseInterceptor: ignoreGlobalParams.includes('responseInterceptor')
@@ -215,9 +201,6 @@ export default class API {
                 //useFetch first call
                 const { response, responseBody } = await useFetchCall();
 
-                //execute actions by status code received from useFetch call
-                await this.executeActionOnStatusCode(requestApi, response.status);
-
                 //check if there's condition to make retries
                 const retryCondition: boolean = this.retryCondition(requestApi, response.status);
 
@@ -233,7 +216,6 @@ export default class API {
                         response,
                         responseBody,
                         retries: { quantity: 0, conditions: [] },
-                        errorStatus: await this.generateErrorStatus(requestApi, response.status),
                     };
                 }
                 await requestApi.responseInterceptor(result);
@@ -281,23 +263,6 @@ export default class API {
         return request;
     };
 
-    //if found, execute action by status code
-    private executeActionOnStatusCode = async (requestApi: EndpointInternal, statusCode: number, isRetry: boolean = false): Promise<void> => {
-        return new Promise(async (resolve, reject) => {
-            try {
-                const item: StatusCodeAction | undefined = requestApi.statusCodesActions.find((action) => action.statusCode === statusCode);
-                const action: Function | undefined = item?.action;
-                const executeOnlyOn: 'firstCall' | 'retry' | undefined = item?.executeOnlyOn;
-
-                if (action && (!executeOnlyOn || (executeOnlyOn === 'firstCall' && !isRetry) || (executeOnlyOn === 'retry' && isRetry))) await action();
-
-                resolve();
-            } catch (error) {
-                reject(error);
-            }
-        });
-    };
-
     //check if is a valid status code to make retries
     private retryCondition = (requestApi: EndpointInternal, statusCode: number): boolean => {
         const conditionsStatus = requestApi.retryCondition;
@@ -325,14 +290,11 @@ export default class API {
                             retriedTimes++;
                             retriedConditions.push(response.status);
 
-                            await this.executeActionOnStatusCode(requestApi, response.status, true);
-
                             result = {
                                 requestApi,
                                 response,
                                 responseBody,
                                 retries: { quantity: retriedTimes, conditions: retriedConditions },
-                                errorStatus: await this.generateErrorStatus(requestApi, response.status),
                             };
                             if (response.ok) {
                                 resolved = true;
@@ -346,26 +308,6 @@ export default class API {
                 resolve(result);
             } catch (error) {
                 reject(error);
-            }
-        });
-    };
-
-    //generate error status as ErrorStatus type if is found in response
-    private generateErrorStatus = (requestApi: EndpointInternal, statusCode: number): Promise<ErrorStatus> => {
-        return new Promise(async (resolve, reject) => {
-            try {
-                const item: ErrorMessage | undefined = requestApi.errorMessages.find((error) => error.statusCode === statusCode);
-
-                const isInError: boolean = item ? true : false;
-                const errorCode: string = item?.errorCode || '';
-                const errorMessage: string = item?.errorMessage || '';
-                const action: Function = item?.action || function () {};
-
-                await action();
-
-                resolve({ isInError, errorCode, errorMessage });
-            } catch (error) {
-                reject(new Error(`Error executing errorMessage action: ${error}`));
             }
         });
     };

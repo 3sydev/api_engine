@@ -1,9 +1,4 @@
-import { ErrorMessage, StatusCodeAction, RequestInterceptor, ResponseInterceptor, Endpoint, CallResponse } from './types';
-
-export const generateGlobalArrayWithOverrides = (globalArray: (StatusCodeAction | ErrorMessage)[], endpointArray: (StatusCodeAction | ErrorMessage)[]): (StatusCodeAction | ErrorMessage)[] => {
-    const newGlobalArray: (StatusCodeAction | ErrorMessage)[] = globalArray.filter((global) => !endpointArray.some((endpoint) => endpoint.statusCode === global.statusCode));
-    return [...newGlobalArray, ...endpointArray];
-};
+import { RequestInterceptor, ResponseInterceptor, Endpoint, CallResponse } from './types';
 
 type MergeRequestInterceptorsMethods = (methods: RequestInterceptor[]) => RequestInterceptor;
 type MergeResponseInterceptorsMethods = (methods: ResponseInterceptor[]) => ResponseInterceptor;

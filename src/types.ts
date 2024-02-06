@@ -4,20 +4,7 @@ export type ApiTypes = {
     [key: string]: string;
 };
 
-export type IgnoreGlobalParam = 'request' | 'retry' | 'retryCondition' | 'statusCodesActions' | 'errorMessages' | 'stackTraceLogExtraParams' | 'requestInterceptor' | 'responseInterceptor';
-
-export type StatusCodeAction = {
-    statusCode: number;
-    action: Function;
-    executeOnlyOn?: 'firstCall' | 'retry';
-};
-
-export type ErrorMessage = {
-    statusCode: number;
-    errorCode: string;
-    errorMessage: string;
-    action?: Function;
-};
+export type IgnoreGlobalParam = 'request' | 'retry' | 'retryCondition' | 'stackTraceLogExtraParams' | 'requestInterceptor' | 'responseInterceptor';
 
 export type RequestInterceptor = (endpoint: Endpoint) => Endpoint;
 export type ResponseInterceptor = (response: CallResponse) => any;
@@ -28,8 +15,6 @@ export type Endpoint = {
     retry?: number | 0;
     retryCondition?: number[];
     ignoreGlobalParams?: IgnoreGlobalParam[];
-    statusCodesActions?: StatusCodeAction[];
-    errorMessages?: ErrorMessage[];
     stackTraceLogExtraParams?: object;
     requestInterceptor?: RequestInterceptor;
     responseInterceptor?: ResponseInterceptor;
@@ -41,8 +26,6 @@ export type EndpointInternal = {
     retry: number | 0;
     retryCondition: number[];
     ignoreGlobalParams: IgnoreGlobalParam[];
-    statusCodesActions: StatusCodeAction[];
-    errorMessages: ErrorMessage[];
     stackTraceLogExtraParams: object;
     requestInterceptor: RequestInterceptor;
     responseInterceptor: ResponseInterceptor;
@@ -52,8 +35,6 @@ export type EndpointGlobal = {
     request?: RequestInit;
     retry?: number | 0;
     retryCondition?: number[];
-    statusCodesActions?: StatusCodeAction[];
-    errorMessages?: ErrorMessage[];
     stackTraceLogExtraParams?: object;
     requestInterceptor?: RequestInterceptor;
     responseInterceptor?: ResponseInterceptor;
@@ -63,8 +44,6 @@ export type EndpointGlobalInternal = {
     request: RequestInit;
     retry: number | 0;
     retryCondition: number[];
-    statusCodesActions: StatusCodeAction[];
-    errorMessages: ErrorMessage[];
     stackTraceLogExtraParams: object;
     requestInterceptor: RequestInterceptor;
     responseInterceptor: ResponseInterceptor;
@@ -114,12 +93,6 @@ export type Retries = {
     conditions: number[];
 };
 
-export type ErrorStatus = {
-    isInError: boolean;
-    errorCode: string;
-    errorMessage: string;
-};
-
 export type UseFetchResponse = {
     response: Response;
     responseBody: BodyInit;
@@ -130,7 +103,6 @@ export type CallResponse = {
     response: Response;
     responseBody: BodyInit;
     retries: Retries;
-    errorStatus: ErrorStatus;
 };
 
 export type StackTrace = {
