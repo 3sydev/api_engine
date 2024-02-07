@@ -545,4 +545,20 @@ describe('TypeScript tests', () => {
             expect(res.interceptorResponse).toEqual({ statusCode: res.response.status, responseBody: res.responseBody, extraParam: 'Extra from endpoint responseInterceptor' });
         });
     });
+
+    describe('Read two times the response body data', () => {
+        test('Second read of response body data', async () => {
+            expect.assertions(3);
+
+            const api = new APIEngine(apiConstantsTsStackTrace);
+            const apiTypes = api.getApiTypes();
+            const res = await api.call(apiTypes.getResources);
+
+            expect(res.response.status).toEqual<number>(200);
+            const stackTraceLog = api.getStackTraceLog();
+            const lastStackTraceLog = stackTraceLog[stackTraceLog.length - 1];
+            expect(lastStackTraceLog.responseBody).toEqual(res.responseBody);
+            expect(await res.response.text()).toEqual(res.responseBody);
+        });
+    });
 });

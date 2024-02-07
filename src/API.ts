@@ -152,9 +152,11 @@ export default class API {
             try {
                 response = await fetch(requestUrl, requestInit);
                 try {
-                    responseBody = await response.text();
+                    //create a clone to leave the response.bodyUsed property to false, so the methods "response.text()", "response.json()", "response.arrayBuffer()", "response.formData()" and "response.blob()" can be used
+                    const responseClone = response.clone();
+                    responseBody = await responseClone.text();
                 } catch (error) {
-                    console.warn('error getting response body for request:', error);
+                    console.warn('error getting response body for stack trace log:', error);
                 } finally {
                     resolve({ response, responseBody });
                 }
