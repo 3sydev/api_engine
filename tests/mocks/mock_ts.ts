@@ -130,6 +130,15 @@ const apiConstantsTs: ApiConstants = {
             retry: -1,
             retryCondition: [400, 404, 200],
         },
+        getResourcesOverwriteBaseUrl: {
+            baseUrl: 'https://jsonplaceholder',
+            path: '.typicode.com/posts',
+            request: {
+                method: 'GET',
+            },
+            retry: 0,
+            retryCondition: [],
+        },
     },
 };
 

@@ -561,4 +561,18 @@ describe('TypeScript tests', () => {
             expect(await res.response.text()).toEqual(res.responseBody);
         });
     });
+
+    describe('Base URL specific tests', () => {
+        test('Overwrite base url from endpoint', async () => {
+            expect.assertions(5);
+
+            const res = await api.call(apiTypes.getResourcesOverwriteBaseUrl);
+
+            expect(res.response.status).toEqual<number>(200);
+            expect(res.response.url).toEqual('https://jsonplaceholder.typicode.com/posts');
+            expect(res.requestApi.baseUrl).toEqual('https://jsonplaceholder');
+            expect(res.requestApi.path).toEqual('.typicode.com/posts');
+            expect(await res.response.text()).toEqual(res.responseBody);
+        });
+    });
 });
