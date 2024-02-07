@@ -9,8 +9,9 @@ const apiConstantsJsInterceptors = {
             return newEndpoint;
         },
         responseInterceptor: (response) => {
-            responseInterceptorData = { statusCode: response.response.status, responseBody: response.responseBody };
-            return;
+            const newData = { statusCode: response.response.status, responseBody: response.responseBody };
+            responseInterceptorData = newData;
+            return newData;
         },
     },
     endpoints: {
@@ -65,6 +66,80 @@ const apiConstantsJsInterceptors = {
             responseInterceptor: (response) => {
                 responseInterceptorData = { statusCode: response.response.status, responseBody: response.responseBody, retry: response.requestApi.retry };
                 throw new Error('Error on responseInterceptor');
+            },
+        },
+        getResourcesWithInterceptorResponse: {
+            path: '/posts',
+            request: {
+                method: 'GET',
+            },
+            retry: 0,
+            retryCondition: [],
+            ignoreGlobalParams: ['responseInterceptor'],
+            responseInterceptor: (response) => {
+                return { statusCode: response.response.status };
+            },
+        },
+        getResourcesWithInterceptorResponseAndPromise: {
+            path: '/posts',
+            request: {
+                method: 'GET',
+            },
+            retry: 0,
+            retryCondition: [],
+            ignoreGlobalParams: ['responseInterceptor'],
+            responseInterceptor: (response) => {
+                return new Promise((resolve) => {
+                    setTimeout(() => {
+                        resolve({ statusCode: response.response.status });
+                    }, 1000);
+                });
+            },
+        },
+        getResourcesWithInterceptorResponseAndPromiseReject: {
+            path: '/posts',
+            request: {
+                method: 'GET',
+            },
+            retry: 0,
+            retryCondition: [],
+            ignoreGlobalParams: ['responseInterceptor'],
+            responseInterceptor: (response) => {
+                return new Promise((resolve, reject) => {
+                    setTimeout(() => {
+                        try {
+                            throw new Error('Reject Promise from interceptorResponse');
+                        } catch (error) {
+                            reject(error);
+                        }
+                    }, 1000);
+                });
+            },
+        },
+        getResourcesWithInterceptorResponseAndGlobal: {
+            path: '/posts',
+            request: {
+                method: 'GET',
+            },
+            retry: 0,
+            retryCondition: [],
+            responseInterceptor: () => {
+                return { extraParam: 'Extra from endpoint responseInterceptor' };
+            },
+        },
+        getResourcesWithInterceptorResponseAndPromiseAndGlobal: {
+            path: '/posts',
+            request: {
+                method: 'GET',
+            },
+            retry: 0,
+            retryCondition: [],
+            responseInterceptor: () => {
+                return new Promise((resolve) => {
+                    setTimeout(() => {
+                        resolve({ extraParam: 'Extra from endpoint responseInterceptor' });
+                    }, 1000);
+                });
             },
         },
     },

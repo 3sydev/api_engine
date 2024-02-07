@@ -16,9 +16,20 @@ export const mergeRequestInterceptorsMethods: MergeRequestInterceptorsMethods = 
 };
 
 export const mergeResponseInterceptorsMethods: MergeResponseInterceptorsMethods = (methods) => {
-    return (response: CallResponse) => {
-        methods.forEach((method) => {
-            method(response);
+    return (response: CallResponse): Promise<object> => {
+        return new Promise(async (resolve, reject) => {
+            try {
+                let finalInterceptorResponse: object = {};
+
+                for (const method of methods) {
+                    const interceptorResponse = await method(response);
+                    finalInterceptorResponse = { ...finalInterceptorResponse, ...(interceptorResponse || {}) };
+                }
+
+                resolve(finalInterceptorResponse);
+            } catch (error) {
+                reject(error);
+            }
         });
     };
 };

@@ -5,6 +5,7 @@ import {
     ApiParametersInternal,
     ApiTypes,
     CallResponse,
+    CallResponseFinal,
     Endpoint,
     EndpointGlobalInternal,
     EndpointInternal,
@@ -176,7 +177,7 @@ export default class API {
     getStackTraceLog = (): StackTrace[] => this.stackTraceLog;
 
     //execute Fetch call for REST API, from all params and configurations and returns Promise with CallResponse type
-    call = (type: string, parameters?: ApiParameters): Promise<CallResponse> => {
+    call = (type: string, parameters?: ApiParameters): Promise<CallResponseFinal> => {
         return new Promise(async (resolve, reject) => {
             try {
                 //define default parameters to use if parameters weren't passed
@@ -218,10 +219,14 @@ export default class API {
                         retries: { quantity: 0, conditions: [] },
                     };
                 }
-                await requestApi.responseInterceptor(result);
+                //get responseInterceptor result
+                const interceptorResponse = await requestApi.responseInterceptor(result);
+
+                //merge responseInterceptor result with result
+                const finalResult: CallResponseFinal = { ...result, interceptorResponse: interceptorResponse || {} };
 
                 //resolve without errors
-                resolve(result);
+                resolve(finalResult);
             } catch (error) {
                 //resolve with errors
                 reject(error);

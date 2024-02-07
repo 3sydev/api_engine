@@ -478,5 +478,74 @@ describe('JavaScript tests', () => {
                 expect(error).toStrictEqual(new Error('Error on responseInterceptor'));
             }
         });
+
+        test('With interceptorResponse no Promise and no global', async () => {
+            expect.assertions(5);
+
+            const api = new APIEngine(apiConstantsJsInterceptors);
+            const apiTypes = api.getApiTypes();
+            const res = await api.call(apiTypes.getResourcesWithInterceptorResponse);
+
+            expect(res.response.status).toEqual(200);
+            expect(res.requestApi.path).toEqual('/posts/1');
+            expect(res.response.url).toEqual('https://jsonplaceholder.typicode.com/posts/1');
+            expect(res.requestApi.retry).toEqual(0);
+            expect(res.interceptorResponse).toEqual({ statusCode: res.response.status });
+        });
+
+        test('With interceptorResponse Promise and no global', async () => {
+            expect.assertions(5);
+
+            const api = new APIEngine(apiConstantsJsInterceptors);
+            const apiTypes = api.getApiTypes();
+            const res = await api.call(apiTypes.getResourcesWithInterceptorResponseAndPromise);
+
+            expect(res.response.status).toEqual(200);
+            expect(res.requestApi.path).toEqual('/posts/1');
+            expect(res.response.url).toEqual('https://jsonplaceholder.typicode.com/posts/1');
+            expect(res.requestApi.retry).toEqual(0);
+            expect(res.interceptorResponse).toEqual({ statusCode: res.response.status });
+        });
+
+        test('With interceptorResponse Promise reject', async () => {
+            expect.assertions(1);
+
+            const api = new APIEngine(apiConstantsJsInterceptors);
+            const apiTypes = api.getApiTypes();
+
+            try {
+                await api.call(apiTypes.getResourcesWithInterceptorResponseAndPromiseReject);
+            } catch (error) {
+                expect(error).toStrictEqual(new Error('Reject Promise from interceptorResponse'));
+            }
+        });
+
+        test('With interceptorResponse no Promise and global', async () => {
+            expect.assertions(5);
+
+            const api = new APIEngine(apiConstantsJsInterceptors);
+            const apiTypes = api.getApiTypes();
+            const res = await api.call(apiTypes.getResourcesWithInterceptorResponseAndGlobal);
+
+            expect(res.response.status).toEqual(200);
+            expect(res.requestApi.path).toEqual('/posts/1');
+            expect(res.response.url).toEqual('https://jsonplaceholder.typicode.com/posts/1');
+            expect(res.requestApi.retry).toEqual(0);
+            expect(res.interceptorResponse).toEqual({ statusCode: res.response.status, responseBody: res.responseBody, extraParam: 'Extra from endpoint responseInterceptor' });
+        });
+
+        test('With interceptorResponse Promise and global', async () => {
+            expect.assertions(5);
+
+            const api = new APIEngine(apiConstantsJsInterceptors);
+            const apiTypes = api.getApiTypes();
+            const res = await api.call(apiTypes.getResourcesWithInterceptorResponseAndPromiseAndGlobal);
+
+            expect(res.response.status).toEqual(200);
+            expect(res.requestApi.path).toEqual('/posts/1');
+            expect(res.response.url).toEqual('https://jsonplaceholder.typicode.com/posts/1');
+            expect(res.requestApi.retry).toEqual(0);
+            expect(res.interceptorResponse).toEqual({ statusCode: res.response.status, responseBody: res.responseBody, extraParam: 'Extra from endpoint responseInterceptor' });
+        });
     });
 });

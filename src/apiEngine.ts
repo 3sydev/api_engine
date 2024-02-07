@@ -1,5 +1,5 @@
 import API from './API';
-import { ApiConstants, ApiParameters, ApiTypes, CallResponse, StackTrace } from './types';
+import { ApiConstants, ApiParameters, ApiTypes, CallResponseFinal, StackTrace } from './types';
 
 export class APIEngine {
     private apiConstants: ApiConstants;
@@ -11,7 +11,7 @@ export class APIEngine {
     }
 
     getApiTypes = (): ApiTypes => this.api.getApiTypes();
-    call = (type: string, parameters?: ApiParameters): Promise<CallResponse> => {
+    call = (type: string, parameters?: ApiParameters): Promise<CallResponseFinal> => {
         return new Promise(async (resolve, reject) => {
             try {
                 const res = await this.api.call(type, parameters);
