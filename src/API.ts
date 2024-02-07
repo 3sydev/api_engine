@@ -18,6 +18,7 @@ import fetch, { BodyInit, RequestInit, Response } from 'node-fetch';
 import { mergeRequestInterceptorsMethods, mergeResponseInterceptorsMethods } from './utils';
 
 const defaultRequestApi: EndpointInternal = {
+    baseUrl: '',
     path: '',
     request: {},
     retry: 0,
@@ -46,6 +47,7 @@ export default class API {
             const endpoints = apiConstants.endpoints;
             const endpoint = apiConstants.endpoints[key];
             endpoints[key] = {
+                baseUrl: endpoint.baseUrl || apiConstants.baseUrl,
                 path: endpoint.path,
                 request: endpoint.request || {},
                 retry: endpoint.retry || 0,
@@ -101,6 +103,7 @@ export default class API {
         const ignoreGlobalParams: IgnoreGlobalParam[] = api.ignoreGlobalParams;
 
         const result: EndpointInternal = {
+            baseUrl: api.baseUrl,
             path: api.path,
             request: ignoreGlobalParams.includes('request') ? api.request : { ...globals.request, ...api.request },
             retry: ignoreGlobalParams.includes('retry') ? api.retry : api.retry || globals.retry || 0,
@@ -249,7 +252,7 @@ export default class API {
 
     //generate url with path and query parameters
     private generateUrl = (requestApi: EndpointInternal, parameters: ApiParametersInternal): string => {
-        const url = this.apiConstants.baseUrl + requestApi.path;
+        const url = requestApi.baseUrl + requestApi.path;
         return this.setQueryParameters(url, parameters.pathQueryParameters);
     };
 

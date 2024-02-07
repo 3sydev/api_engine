@@ -10,6 +10,7 @@ export type RequestInterceptor = (endpoint: Endpoint) => Endpoint;
 export type ResponseInterceptor = (response: CallResponse) => object | Promise<object> | undefined | null | void;
 
 export type Endpoint = {
+    baseUrl?: string;
     path: string;
     request?: RequestInit;
     retry?: number | 0;
@@ -21,6 +22,7 @@ export type Endpoint = {
 };
 
 export type EndpointInternal = {
+    baseUrl: string;
     path: string;
     request: RequestInit;
     retry: number | 0;
