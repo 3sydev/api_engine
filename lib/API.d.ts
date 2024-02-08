@@ -1,17 +1,19 @@
-import { ApiConstants, ApiParameters, ApiTypes, CallResponse } from './types';
+import { ApiConstants, ApiParameters, ApiTypes, CallResponseFinal, StackTrace } from './types';
 export default class API {
     private apiConstants;
     private apiTypes;
+    private stackTraceLog;
     constructor(apiConstants: ApiConstants);
+    private generateApiBasedOnRequestInterceptor;
     private getApi;
+    private generateStackTraceCallLog;
     private useFetch;
     getApiTypes: () => ApiTypes;
-    call: (type: string, parameters?: ApiParameters) => Promise<CallResponse>;
+    getStackTraceLog: () => StackTrace[];
+    call: (type: string, parameters?: ApiParameters) => Promise<CallResponseFinal>;
     private setQueryParameters;
     private generateUrl;
     private generateRequest;
-    private executeActionOnStatusCode;
     private retryCondition;
     private manageRetry;
-    private generateErrorStatus;
 }

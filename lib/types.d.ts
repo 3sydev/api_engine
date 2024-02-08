@@ -1,50 +1,47 @@
-import { BodyInit, RequestInit, Response } from 'node-fetch';
+import { BodyInit, Headers, HeadersInit, RequestInit, Response } from 'node-fetch';
 export type ApiTypes = {
     [key: string]: string;
 };
-export type IgnoreGlobalParam = 'request' | 'retry' | 'retryCondition' | 'statusCodesActions' | 'errorMessages';
-export type StatusCodeAction = {
-    statusCode: number;
-    action: Function;
-    executeOnlyOn?: 'firstCall' | 'retry';
-};
-export type ErrorMessage = {
-    statusCode: number;
-    errorCode: string;
-    errorMessage: string;
-    action?: Function;
-};
-type Endpoint = {
+export type IgnoreGlobalParam = 'request' | 'retry' | 'retryCondition' | 'stackTraceLogExtraParams' | 'requestInterceptor' | 'responseInterceptor';
+export type RequestInterceptor = (endpoint: Endpoint) => Endpoint;
+export type ResponseInterceptor = (response: CallResponse) => object | Promise<object> | undefined | null | void;
+export type Endpoint = {
+    baseUrl?: string;
     path: string;
     request?: RequestInit;
     retry?: number | 0;
     retryCondition?: number[];
     ignoreGlobalParams?: IgnoreGlobalParam[];
-    statusCodesActions?: StatusCodeAction[];
-    errorMessages?: ErrorMessage[];
+    stackTraceLogExtraParams?: object;
+    requestInterceptor?: RequestInterceptor;
+    responseInterceptor?: ResponseInterceptor;
 };
 export type EndpointInternal = {
+    baseUrl: string;
     path: string;
     request: RequestInit;
     retry: number | 0;
     retryCondition: number[];
     ignoreGlobalParams: IgnoreGlobalParam[];
-    statusCodesActions: StatusCodeAction[];
-    errorMessages: ErrorMessage[];
+    stackTraceLogExtraParams: object;
+    requestInterceptor: RequestInterceptor;
+    responseInterceptor: ResponseInterceptor;
 };
 export type EndpointGlobal = {
     request?: RequestInit;
     retry?: number | 0;
     retryCondition?: number[];
-    statusCodesActions?: StatusCodeAction[];
-    errorMessages?: ErrorMessage[];
+    stackTraceLogExtraParams?: object;
+    requestInterceptor?: RequestInterceptor;
+    responseInterceptor?: ResponseInterceptor;
 };
 export type EndpointGlobalInternal = {
     request: RequestInit;
     retry: number | 0;
     retryCondition: number[];
-    statusCodesActions: StatusCodeAction[];
-    errorMessages: ErrorMessage[];
+    stackTraceLogExtraParams: object;
+    requestInterceptor: RequestInterceptor;
+    responseInterceptor: ResponseInterceptor;
 };
 type Endpoints = {
     [key: string]: Endpoint;
@@ -81,15 +78,33 @@ export type Retries = {
     quantity: number;
     conditions: number[];
 };
-export type ErrorStatus = {
-    isInError: boolean;
-    errorCode: string;
-    errorMessage: string;
+export type UseFetchResponse = {
+    response: Response;
+    responseBody: BodyInit;
 };
 export type CallResponse = {
     requestApi: EndpointInternal;
     response: Response;
+    responseBody: BodyInit;
     retries: Retries;
-    errorStatus: ErrorStatus;
+};
+export type CallResponseFinal = {
+    requestApi: EndpointInternal;
+    response: Response;
+    responseBody: BodyInit;
+    retries: Retries;
+    interceptorResponse: object;
+};
+export type StackTrace = {
+    startTimestamp: string;
+    endTimestamp: string;
+    requestUrl: string;
+    requestHeaders: HeadersInit;
+    responseHeaders: Headers;
+    requestBody: BodyInit;
+    responseBody: BodyInit;
+    responseStatusCode: number;
+    errorMessage: string | unknown;
+    extraProperties: object;
 };
 export {};
