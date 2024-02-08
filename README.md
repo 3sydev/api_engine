@@ -19,8 +19,8 @@ Api Engine offers the following key functionalities:
 3. HTTP Requests: Utilize the call method to make GET, POST, PUT, and DELETE requests. The method supports various parameters and configurations for flexible API integration;
 4. Global Params: Provide global configuration for all endpoints parameters. This allow you to not rewrite the same configuration for every endpoint;
 5. Retry Mechanism: Implement automatic retries based on configurable conditions, enabling robust handling of transient errors;
-6. Status Code Actions: Execute specific actions based on HTTP status codes, providing customizable behavior for different response scenarios;
-7. Error Handling: Define error messages and actions to handle API errors effectively, enhancing the reliability of your application;
+6. Interceptor Support: Intercept and manipulate both request and response dynamically using the interceptor feature;
+7. Stack Trace: track all api calls with request and response data;
 8. Promise-based: Utilize promises for asynchronous handling of API calls.
 
 ## Configuration Options
@@ -56,6 +56,17 @@ const apiConstants: ApiConstants = {
         },
         retry: 3,
         retryCondition: [500, 502],
+        stackTraceLogExtraParams: {
+            extraParam: 'extraParam',
+        }, // Include extra parameters in stack traces
+        requestInterceptor: (requestConfig) => {
+            // Your custom logic for modifying request configuration globally
+            return requestConfig;
+        },
+        responseInterceptor: (response) => {
+            // Your custom logic for handling responses globally
+            return response;
+        },
     },
     endpoints: {
         // Define your endpoints here
@@ -223,13 +234,17 @@ In your `APIEngine` class, `globalParams` is a set of configuration parameters t
 
 -   Retry settings (except for the `retry` parameter) merge with the endpoint level retry settings. If an endpoint specifies its own retry settings, they will merge with the global retry settings, combining `retryCondition`. For the `retry` parameter instead, the endpoint level value will always overwrite the global level value.
 
-### 3. Status Codes Actions:
+### 3. Stack Trace Extra Params:
 
--   Status codes actions defined in `globalParams.statusCodesActions` will merge with the endpoint level `statusCodesActions` parameter, unless an endpoint level `statusCodesActions` value has the same `statusCode`, in this case the endpoint level value will ovverride del global level value.
+-   Stack trace extra params defined in `globalParams.stackTraceExtraParams` will merge with the endpoint level `stackTraceExtraParams` parameter;
 
-### 4. Error Messages:
+### 4. Request Interceptor:
 
--   Error Messages defined in `globalParams.errorMessages` will merge with the endpoint level `errorMessages` parameter, unless an endpoint level `errorMessages` value has the same `statusCode`, in this case the endpoint level value will ovverride del global level value.
+-   Request interceptor defined in `globalParams.requestInterceptor` will merge with the endpoint level `requestInterceptor` parameter. Both the methods will be extecuted. The endpoint level method will be executed at least;
+
+### 5. Response Interceptor:
+
+-   Response interceptor defined in `globalParams.responseInterceptor` will merge with the endpoint level `responseInterceptor` parameter. Both the methods will be extecuted. The endpoint level method will be executed at least.
 
 ### How to Create `globalParams`:
 
@@ -247,25 +262,15 @@ const apiConstants: ApiConstants = {
         },
         retry: 3,
         retryCondition: [500, 502],
-        statusCodesActions: [
-            {
-                statusCode: 404,
-                action: () => {
-                    throw new Error('Error on 404 status code action execution');
-                },
-                executeOnlyOn: 'firstCall',
-            },
-        ],
-        errorMessages: [
-            {
-                statusCode: 400,
-                errorCode: 'ERR',
-                errorMessage: 'Call failed',
-                action: () => {
-                    throw new Error('Error on 400 error message action');
-                },
-            },
-        ],
+        stackTraceLogExtraParams: {
+            extraParam: 'extraParam',
+        },
+        requestInterceptor: (requestConfig) => {
+            return requestConfig;
+        },
+        responseInterceptor: (response) => {
+            return response;
+        },
     },
     endpoints: {
         // Define your endpoints here
@@ -281,13 +286,13 @@ In this example:
 
 -   All requests will have a maximum of 3 retries, and retries will be attempted for HTTP status codes 500 and 502 unless overridden at the endpoint level;
 
--   All requests will execute action on `statusCode: 404`, and only on the first call, not on retries;
+-   All requests will execute the method defined in `requestInterceptor`, merged with the endpoint level config, before the call is made;
 
--   All requests will set `errorCode: 'ERR'` and `errorMessage: 'Call failed'` and execute action on `statusCode: 400`.
+-   All requests will execute the method defined in `responseInterceptor`, merged with the endpoint level config, before the call is made.
 
 ### Overriding `globalParams` at the Endpoint Level:
 
-You can override global parameters at the endpoint level by providing endpoint-specific values in the `request`, `retry`, `statusCodesActions` and `errorMessages` properties:
+You can override global parameters at the endpoint level by providing endpoint-specific values in the `baseUrl`, `request`, `retry`, `retryCondition`, `stackTraceLogExtraParams`, `requestInterceptor` and `responseInterceptor` properties:
 
 ```typescript
 const apiConstants: ApiConstants = {
@@ -301,25 +306,15 @@ const apiConstants: ApiConstants = {
         },
         retry: 3,
         retryCondition: [500, 502],
-        statusCodesActions: [
-            {
-                statusCode: 404,
-                action: () => {
-                    throw new Error('Error on 404 status code action execution');
-                },
-                executeOnlyOn: 'firstCall',
-            },
-        ],
-        errorMessages: [
-            {
-                statusCode: 400,
-                errorCode: 'ERR',
-                errorMessage: 'Call failed',
-                action: () => {
-                    throw new Error('Error on 400 error message action');
-                },
-            },
-        ],
+        stackTraceLogExtraParams: {
+            extraParam: 'extraParam',
+        },
+        requestInterceptor: (requestConfig) => {
+            return requestConfig;
+        },
+        responseInterceptor: (response) => {
+            return response;
+        },
     },
     endpoints: {
         getResource: {
@@ -340,43 +335,17 @@ const apiConstants: ApiConstants = {
                 method: 'POST',
             },
             // ... other endpoint parameters
-            statusCodesActions: [
-                // Overrides global status code action on 404
-                {
-                    statusCode: 404,
-                    action: () => {
-                        throw new Error('Error on 404');
-                    },
-                },
-                // Merges global status code actions
-                {
-                    statusCode: 400,
-                    action: () => {
-                        throw new Error('Error on 400 status code action execution');
-                    },
-                    executeOnlyOn: 'firstCall',
-                },
-            ],
-            errorMessages: [
-                // Overrides global error message on 400
-                {
-                    statusCode: 400,
-                    errorCode: 'ERR',
-                    errorMessage: 'Call failed on 400',
-                    action: () => {
-                        throw new Error('Error on 400 error message action');
-                    },
-                },
-                // Merges global error messages
-                {
-                    statusCode: 404,
-                    errorCode: 'ERR',
-                    errorMessage: 'Call failed',
-                    action: () => {
-                        throw new Error('Error on 404 error message action');
-                    },
-                },
-            ],
+            stackTraceLogExtraParams: {
+                extraParam: 'extraParam', // Merges with global stackTraceLogExtraParams
+            },
+            requestInterceptor: (requestConfig) => {
+                // Will be executed after global requestInterceptor
+                return requestConfig;
+            },
+            responseInterceptor: (response) => {
+                // Will be executed after global responseInterceptor
+                return response;
+            },
         },
         // ... other endpoints
     },
@@ -458,20 +427,18 @@ const apiConstants: ApiConstants = {
             retry: 3, // Number of retry attempts
             retryCondition: [500, 502], // Retry conditions (HTTP status codes)
             ignoreGlobalParams: ['retry'], // Ignore specific global parameters for this endpoint
-            statusCodesActions: [
-                {
-                    statusCode: 200,
-                    action: () => console.log('Action for status code 200'),
-                },
-            ], // Actions based on HTTP status codes
-            errorMessages: [
-                {
-                    statusCode: 404,
-                    errorCode: 'ERR_NOT_FOUND',
-                    errorMessage: 'Resource not found',
-                    action: () => console.error('Error message action for 404'),
-                },
-            ], // Error messages and associated actions
+            stackTraceExtraParams: {
+                // Will set extra parameters to stack trace logs
+                extraParam: 'extraParam',
+            },
+            requestInterceptor: (requestConfig) => {
+                // Will modify the endpoint configuration before the API is called
+                return requestConfig;
+            },
+            responseInterceptor: (response) => {
+                // Will handle the API response
+                return response;
+            },
         },
         createResource: {
             path: '/posts',
@@ -488,6 +455,17 @@ const apiConstants: ApiConstants = {
             },
             // ... other endpoint parameters
         },
+        otherEndpoint: {
+            baseUrl: 'api.custom.com', // Will override global baseUrl
+            path: '/posts',
+            request: {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            },
+            // ... other endpoint parameters
+        },
         // ... other endpoints
     },
 };
@@ -496,6 +474,8 @@ export default apiConstants;
 ```
 
 ### Configurable Endpoint Parameters:
+
+-   **baseUrl**: Ovverride the global baseUrl;
 
 -   **path**: Relative path of the endpoint. Supports path parameters like `{id}`;
 
@@ -507,9 +487,11 @@ export default apiConstants;
 
 -   **ignoreGlobalParams**: Ignore specific global parameters for this endpoint;
 
--   **statusCodesActions**: Actions to be executed based on HTTP status codes;
+-   **stackTraceExtraParams**: Adds extra parameters to stack trace logs;
 
--   **errorMessages**: Error messages with associated actions.
+-   **requestInterceptor**: Modifies the endpoint request configuration;
+
+-   **responseInterceptor**: Handle the response data.
 
 ### Using Endpoints in Your Application:
 
@@ -564,6 +546,60 @@ In this example:
     -   `{ name: 'userId', value: '456' }`: A query parameter with the name `userId` and value `456`.
 
 These parameters are then used to construct the URL for the API call, with path parameters replacing placeholders in the endpoint's path, and query parameters appended to the URL.
+
+## Stack Trace Functionality
+
+The stack trace functionality offers a comprehensive logging mechanism for API calls, capturing essential details throughout the request-response lifecycle. This functionality creates a detailed log entry for each API interaction.
+
+### Logged informations
+
+This functionality constructs a structured log entry, encompassing various aspects of an API call:
+
+-   **Timing Information**: Captures the start and end timestamps of the API call;
+-   **Request Details**: Includes the request URL, headers, body ecc;
+-   **Response Details**: Encompasses response headers, body, HTTP status code ecc;
+-   **Error Handling**: Records any errors that occur during the API call;
+-   **Extra Parameters**: Allows you to include additional context-specific information.
+
+#### Trace data model
+
+```typescript
+[
+    {
+        startTimestamp: string, // The timestamp when the API call started
+        endTimestamp: string, // The timestamp when the API call ended
+        requestUrl: string, // The URL of the API request
+        requestHeaders: HeadersInit, // Headers sent in the API request
+        responseHeaders: Headers, // Headers received in the API response
+        requestBody: BodyInit, // The body of the API request
+        responseBody: BodyInit, // The body of the API response
+        responseStatusCode: number, // The HTTP status code of the API response
+        errorMessage: string | unknown, // Any error that occurred during the API call
+        extraProperties: object, // Extra parameters specific to the stack trace log, as provided by stackTraceLogExtraParams
+    },
+];
+```
+
+### Usage
+
+```typescript
+// Initialize the API class
+const api = new API(apiConstants);
+
+// Perform API calls
+await api.call('getResource');
+await api.call('createResource', {
+    /* parameters */
+});
+
+// Retrieve the stack trace log
+const stackTraceLog = api.getStackTraceLog();
+
+// Utilize log entries for analysis or debugging
+console.log(stackTraceLog);
+```
+
+By leveraging this stack trace functionality, you can effectively trace the execution flow of API calls, examine request-response details, and diagnose errors, enhancing the overall visibility and debuggability of the API integration process.
 
 ## Contributing
 
