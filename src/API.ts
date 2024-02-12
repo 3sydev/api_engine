@@ -16,6 +16,7 @@ import {
 } from './types';
 import fetch, { BodyInit, RequestInit, Response } from 'node-fetch';
 import { mergeRequestInterceptorsMethods, mergeResponseInterceptorsMethods } from './utils';
+import { merge } from 'lodash';
 
 const defaultRequestApi: EndpointInternal = {
     baseUrl: '',
@@ -87,7 +88,7 @@ export default class API {
     };
 
     //returns endpoint from property string as EndpointInternal type
-    private getApi = (type: string): EndpointInternal => {
+    private getApi = (type: string, parameters: ApiParametersInternal): EndpointInternal => {
         const apis = this.apiConstants.endpoints;
         const globals = this.apiConstants.globalParams;
 
@@ -102,14 +103,21 @@ export default class API {
 
         const ignoreGlobalParams: IgnoreGlobalParam[] = api.ignoreGlobalParams;
 
+        const parametersRequest = {
+            headers: JSON.stringify(parameters.headers) === '{}' ? undefined : parameters.headers,
+            body: JSON.stringify(parameters.body) === '{}' ? undefined : parameters.body,
+        };
+
         const result: EndpointInternal = {
             baseUrl: api.baseUrl,
             path: api.path,
-            request: ignoreGlobalParams.includes('request') ? api.request : { ...globals.request, ...api.request },
+            request: ignoreGlobalParams.includes('request') ? merge({}, api.request, parametersRequest) : merge({}, globals.request, api.request, parametersRequest),
             retry: ignoreGlobalParams.includes('retry') ? api.retry : api.retry || globals.retry || 0,
             retryCondition: ignoreGlobalParams.includes('retryCondition') ? api.retryCondition : [...globals.retryCondition, ...api.retryCondition],
             ignoreGlobalParams: ignoreGlobalParams,
-            stackTraceLogExtraParams: ignoreGlobalParams.includes('stackTraceLogExtraParams') ? api.stackTraceLogExtraParams : { ...globals.stackTraceLogExtraParams, ...api.stackTraceLogExtraParams },
+            stackTraceLogExtraParams: ignoreGlobalParams.includes('stackTraceLogExtraParams')
+                ? api.stackTraceLogExtraParams
+                : merge({}, globals.stackTraceLogExtraParams, api.stackTraceLogExtraParams),
             requestInterceptor: ignoreGlobalParams.includes('requestInterceptor') ? api.requestInterceptor : mergeRequestInterceptorsMethods([globals.requestInterceptor, api.requestInterceptor]),
             responseInterceptor: ignoreGlobalParams.includes('responseInterceptor')
                 ? api.responseInterceptor
@@ -133,7 +141,7 @@ export default class API {
             startTimestamp,
             endTimestamp: new Date().toISOString(),
             requestUrl,
-            requestHeaders: requestInit.headers!,
+            requestHeaders: requestInit.headers || {},
             responseHeaders: response.headers,
             requestBody: requestInit.body || '',
             responseBody: responseBody || '',
@@ -145,7 +153,7 @@ export default class API {
     };
 
     //Execute fetch method and returns Promise as Fetch Respose type
-    private useFetch = (requestUrl: string, requestInit: RequestInit, requestApi: EndpointInternal): Promise<UseFetchResponse> => {
+    private useFetch = (requestUrl: string, requestApi: EndpointInternal): Promise<UseFetchResponse> => {
         return new Promise(async (resolve, reject) => {
             const startTimestamp: string = new Date().toISOString();
             let response: Response = new Response();
@@ -153,7 +161,7 @@ export default class API {
             let errorMessage;
 
             try {
-                response = await fetch(requestUrl, requestInit);
+                response = await fetch(requestUrl, requestApi.request);
                 try {
                     //create a clone to leave the response.bodyUsed property to false, so the methods "response.text()", "response.json()", "response.arrayBuffer()", "response.formData()" and "response.blob()" can be used
                     const responseClone = response.clone();
@@ -168,7 +176,15 @@ export default class API {
                 reject(error);
             } finally {
                 //generate stack trace call log
-                const stackTrace: StackTrace = this.generateStackTraceCallLog(requestUrl, requestInit, startTimestamp, response, responseBody, errorMessage, requestApi.stackTraceLogExtraParams);
+                const stackTrace: StackTrace = this.generateStackTraceCallLog(
+                    requestUrl,
+                    requestApi.request,
+                    startTimestamp,
+                    response,
+                    responseBody,
+                    errorMessage,
+                    requestApi.stackTraceLogExtraParams
+                );
                 //push stack trace call log
                 this.stackTraceLog.push(stackTrace);
             }
@@ -195,15 +211,12 @@ export default class API {
                 };
 
                 //endpoint got from property string as EndpointInternal type
-                const requestApi: EndpointInternal = this.getApi(type);
+                const requestApi: EndpointInternal = this.getApi(type, internalParameters);
                 //url generated with path and query parameters
                 const requestUrl: string = this.generateUrl(requestApi, internalParameters);
 
-                //request object geenrated with apiConstants and parameters request properties
-                const requestInit: RequestInit = this.generateRequest(requestApi, parameters);
-
                 //definition of useFetch method already configured with parameters to use in retries iterations
-                const useFetchCall = async (): Promise<UseFetchResponse> => await this.useFetch(requestUrl, requestInit, requestApi);
+                const useFetchCall = async (): Promise<UseFetchResponse> => await this.useFetch(requestUrl, requestApi);
                 //useFetch first call
                 const { response, responseBody } = await useFetchCall();
 
@@ -254,23 +267,6 @@ export default class API {
     private generateUrl = (requestApi: EndpointInternal, parameters: ApiParametersInternal): string => {
         const url = requestApi.baseUrl + requestApi.path;
         return this.setQueryParameters(url, parameters.pathQueryParameters);
-    };
-
-    //generate request for Fetch method as RequestInit type
-    private generateRequest = (requestApi: EndpointInternal, parameters?: ApiParameters): RequestInit => {
-        const { headers, body: _body } = parameters || { headers: {}, body: undefined };
-        const staticRequest = requestApi.request;
-        const staticRequestBody = staticRequest.body;
-
-        const body = _body ? JSON.stringify({ ...JSON.parse(staticRequestBody as string), ...JSON.parse(_body as string) } as BodyInit) : staticRequestBody;
-
-        const request = {
-            method: staticRequest.method,
-            headers: { ...staticRequest.headers, ...headers },
-            body,
-        };
-
-        return request;
     };
 
     //check if is a valid status code to make retries
