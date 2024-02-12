@@ -13,7 +13,6 @@ export default class API {
     call: (type: string, parameters?: ApiParameters) => Promise<CallResponseFinal>;
     private setQueryParameters;
     private generateUrl;
-    private generateRequest;
     private retryCondition;
     private manageRetry;
 }
