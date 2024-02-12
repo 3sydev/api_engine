@@ -35,6 +35,31 @@ const apiConstantsTsGlobal: ApiConstants = {
             retry: 3,
             ignoreGlobalParams: ['request', 'retry', 'retryCondition'],
         },
+        getResourcesMixedGlobalParamsAndEndpointParams: {
+            path: '/posts',
+            request: {
+                method: 'GET',
+                headers: {
+                    'Custom-Header': 'customeHeader',
+                },
+            },
+        },
+        getResourcesMixedEndpointParamsAndCallMethodParams: {
+            path: '/posts',
+            request: {
+                method: 'GET',
+                headers: {
+                    'Custom-Header': 'customeHeader',
+                },
+            },
+            ignoreGlobalParams: ['request'],
+        },
+        getResourcesMixedGlobalParamsAndCallMethodParams: {
+            path: '/posts',
+            request: {
+                method: 'GET',
+            },
+        },
     },
 };
 

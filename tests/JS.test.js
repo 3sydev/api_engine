@@ -267,6 +267,71 @@ describe('JavaScript tests', () => {
             expect(res.requestApi.retry).toEqual(apiConstantsJsGlobal.endpoints.getResourcesIgnoreGlobalParams.retry);
             expect(res.requestApi.retryCondition).toEqual([]);
         });
+
+        test('Mixed global parameters and endpoint parameters', async () => {
+            expect.assertions(6);
+            const api = new APIEngine(apiConstantsJsGlobal);
+            const apiTypes = api.getApiTypes();
+            const res = await api.call(apiTypes.getResourcesMixedGlobalParamsAndEndpointParams);
+
+            expect(res.response.status).toEqual(200);
+            expect(res.response.url).toEqual(apiConstantsJsGlobal.baseUrl + apiConstantsJsGlobal.endpoints.getResourcesMixedGlobalParamsAndEndpointParams.path);
+            expect(res.requestApi.request?.method).toEqual(apiConstantsJsGlobal.endpoints.getResourcesMixedGlobalParamsAndEndpointParams.request?.method);
+            expect(res.requestApi.request?.headers).toEqual({
+                'Cache-Control': 'no-store',
+                Expires: '0',
+                'Custom-Header': 'customeHeader',
+            });
+            expect(res.requestApi.retry).toEqual(apiConstantsJsGlobal.endpoints.getResourcesMixedGlobalParamsAndEndpointParams.retry);
+            expect(res.requestApi.retryCondition).toEqual([404, 404, 404]);
+        });
+
+        test('Mixed global parameters, endpoint and call method parameters', async () => {
+            expect.assertions(6);
+            const api = new APIEngine(apiConstantsJsGlobal);
+            const apiTypes = api.getApiTypes();
+            const res = await api.call(apiTypes.getResourcesMixedGlobalParamsAndEndpointParams, { headers: { Test: 'Test' } });
+
+            expect(res.response.status).toEqual(200);
+            expect(res.response.url).toEqual(apiConstantsJsGlobal.baseUrl + apiConstantsJsGlobal.endpoints.getResourcesMixedGlobalParamsAndEndpointParams.path);
+            expect(res.requestApi.request?.method).toEqual(apiConstantsJsGlobal.endpoints.getResourcesMixedGlobalParamsAndEndpointParams.request?.method);
+            expect(res.requestApi.request?.headers).toEqual({
+                'Cache-Control': 'no-store',
+                Expires: '0',
+                'Custom-Header': 'customeHeader',
+                Test: 'Test',
+            });
+            expect(res.requestApi.retry).toEqual(apiConstantsJsGlobal.endpoints.getResourcesMixedGlobalParamsAndEndpointParams.retry);
+            expect(res.requestApi.retryCondition).toEqual([404, 404, 404]);
+        });
+
+        test('Mixed endpoint and call method parameters', async () => {
+            expect.assertions(6);
+            const api = new APIEngine(apiConstantsJsGlobal);
+            const apiTypes = api.getApiTypes();
+            const res = await api.call(apiTypes.getResourcesMixedEndpointParamsAndCallMethodParams, { headers: { Test: 'Test' } });
+
+            expect(res.response.status).toEqual(200);
+            expect(res.response.url).toEqual(apiConstantsJsGlobal.baseUrl + apiConstantsJsGlobal.endpoints.getResourcesMixedEndpointParamsAndCallMethodParams.path);
+            expect(res.requestApi.request?.method).toEqual(apiConstantsJsGlobal.endpoints.getResourcesMixedEndpointParamsAndCallMethodParams.request?.method);
+            expect(res.requestApi.request?.headers).toEqual({ 'Custom-Header': 'customeHeader', Test: 'Test' });
+            expect(res.requestApi.retry).toEqual(apiConstantsJsGlobal.endpoints.getResourcesMixedEndpointParamsAndCallMethodParams.retry);
+            expect(res.requestApi.retryCondition).toEqual([404, 404, 404]);
+        });
+
+        test('Mixed global and call method parameters', async () => {
+            expect.assertions(6);
+            const api = new APIEngine(apiConstantsJsGlobal);
+            const apiTypes = api.getApiTypes();
+            const res = await api.call(apiTypes.getResourcesMixedGlobalParamsAndCallMethodParams, { headers: { Test: 'Test' } });
+
+            expect(res.response.status).toEqual(200);
+            expect(res.response.url).toEqual(apiConstantsJsGlobal.baseUrl + apiConstantsJsGlobal.endpoints.getResourcesMixedGlobalParamsAndCallMethodParams.path);
+            expect(res.requestApi.request?.method).toEqual(apiConstantsJsGlobal.endpoints.getResourcesMixedGlobalParamsAndCallMethodParams.request?.method);
+            expect(res.requestApi.request?.headers).toEqual({ 'Cache-Control': 'no-store', Expires: '0', Test: 'Test' });
+            expect(res.requestApi.retry).toEqual(apiConstantsJsGlobal.endpoints.getResourcesMixedGlobalParamsAndCallMethodParams.retry);
+            expect(res.requestApi.retryCondition).toEqual([404, 404, 404]);
+        });
     });
 
     describe('Stack Trace tests', () => {
