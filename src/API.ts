@@ -14,7 +14,6 @@ import {
     StackTrace,
     UseFetchResponse,
 } from './types';
-import fetch, { BodyInit, RequestInit, Response } from 'node-fetch';
 import { mergeRequestInterceptorsMethods, mergeResponseInterceptorsMethods } from './utils';
 import { merge } from 'lodash';
 
