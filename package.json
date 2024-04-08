@@ -1,6 +1,6 @@
 {
   "name": "@3sy/api-engine",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "REST API engine to simplify REST API integration in NodeJS applications.",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
@@ -22,8 +22,7 @@
     "react-native",
     "api",
     "rest",
-    "fetch",
-    "node-fetch"
+    "fetch"
   ],
   "author": "3SY srl <michael@3sy.dev> (https://3sy.it/)",
   "license": "MIT",
