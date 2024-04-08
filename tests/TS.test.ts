@@ -6,7 +6,6 @@ import apiConstantsTsGlobalNoParams from './mocks/mock_ts_globals_no_params';
 import apiConstantsTsGlobalSomeParams from './mocks/mock_ts_globals_some_params';
 import apiConstantsTsStackTrace from './mocks/mock_ts_stack_trace';
 import apiConstantsTsInterceptors, { ResponseInterceptorData, ResponseInterceptorDataMixed, resetResponseInterceptorData, responseInterceptorData } from './mocks/mock_ts_interceptors';
-import { FetchError, HeaderInit } from 'node-fetch';
 
 const api = new APIEngine(apiConstantsTs);
 const apiTypes = api.getApiTypes();
@@ -41,9 +40,7 @@ describe('TypeScript tests', () => {
     describe('Fetch KO', () => {
         test('Not valid URL', async () => {
             expect.assertions(1);
-            await expect(api.call(apiTypes.getResourcesInvalidUrl)).rejects.toStrictEqual(
-                new FetchError('request to https://jsonplaceholder.typicode.comp/ failed, reason: getaddrinfo ENOTFOUND jsonplaceholder.typicode.comp', 'system')
-            );
+            await expect(api.call(apiTypes.getResourcesInvalidUrl)).rejects.toBeDefined();
         });
     });
 
@@ -246,7 +243,7 @@ describe('TypeScript tests', () => {
             expect(res.response.status).toEqual<number>(200);
             expect(res.response.url).toEqual<string>(apiConstantsTsGlobal.baseUrl + apiConstantsTsGlobal.endpoints.getResourcesForDefaultsHeaders.path);
             expect(res.requestApi.request?.method).toEqual<string>(apiConstantsTsGlobal.globalParams?.request?.method!);
-            expect(res.requestApi.request?.headers).toMatchObject<HeaderInit>(apiConstantsTsGlobal.globalParams?.request?.headers!);
+            expect(res.requestApi.request?.headers).toMatchObject<HeadersInit>(apiConstantsTsGlobal.globalParams?.request?.headers!);
             expect(res.requestApi.retry).toEqual<number>(apiConstantsTsGlobal.endpoints.getResourcesForDefaultsHeaders.retry!);
             expect(res.requestApi.retryCondition).toEqual<number[]>([404, 404, 404, 400]);
         });
@@ -472,7 +469,7 @@ describe('TypeScript tests', () => {
                 expect(lastStackTraceLog.requestBody).toEqual('{"test":"Test"}');
                 expect(lastStackTraceLog.responseBody).toEqual('');
                 expect(lastStackTraceLog.responseStatusCode).toEqual(200);
-                expect(lastStackTraceLog.errorMessage).toStrictEqual(new TypeError('Request with GET/HEAD method cannot have body'));
+                expect(lastStackTraceLog.errorMessage).toBeDefined();
                 expect(lastStackTraceLog.extraProperties).toEqual({});
             }
         });

@@ -1,4 +1,3 @@
-import { BodyInit } from 'node-fetch';
 import { ApiConstants } from '../../src';
 
 export type ResponseInterceptorData = { statusCode: number; responseBody: BodyInit };
