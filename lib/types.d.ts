@@ -1,4 +1,3 @@
-import { BodyInit, Headers, HeadersInit, RequestInit, Response } from 'node-fetch';
 export type ApiTypes = {
     [key: string]: string;
 };
