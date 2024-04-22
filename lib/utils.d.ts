@@ -3,4 +3,5 @@ type MergeRequestInterceptorsMethods = (methods: RequestInterceptor[]) => Reques
 type MergeResponseInterceptorsMethods = (methods: ResponseInterceptor[]) => ResponseInterceptor;
 export declare const mergeRequestInterceptorsMethods: MergeRequestInterceptorsMethods;
 export declare const mergeResponseInterceptorsMethods: MergeResponseInterceptorsMethods;
+export declare const secureJsonParse: (value: string) => BodyInit;
 export {};
