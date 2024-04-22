@@ -139,6 +139,15 @@ const apiConstantsTs: ApiConstants = {
             retry: 0,
             retryCondition: [],
         },
+        onlyTextResponse: {
+            baseUrl: 'https://dz0wj.wiremockapi.cloud',
+            path: '/only-text-response',
+            request: {
+                method: 'GET',
+            },
+            retry: 0,
+            retryCondition: [],
+        },
     },
 };
 

@@ -530,7 +530,7 @@ describe('JavaScript tests', () => {
             try {
                 await api.call(apiTypes.getResourcesWithErrorInterceptors);
             } catch (error) {
-                expect({ ...responseInterceptorData, responseBody: JSON.parse(responseInterceptorData.responseBody.toString()) }).toEqual({
+                expect({ ...responseInterceptorData, responseBody: responseInterceptorData.responseBody }).toEqual({
                     statusCode: 200,
                     responseBody: JSON.parse(
                         '{"userId": 1,"id": 1,"title": "sunt aut facere repellat provident occaecati excepturi optio reprehenderit","body": "quia et suscipit\\nsuscipit recusandae consequuntur expedita et cum\\nreprehenderit molestiae ut ut quas totam\\nnostrum rerum est autem sunt rem eveniet architecto"}'
@@ -623,7 +623,7 @@ describe('JavaScript tests', () => {
             const stackTraceLog = api.getStackTraceLog();
             const lastStackTraceLog = stackTraceLog[stackTraceLog.length - 1];
             expect(lastStackTraceLog.responseBody).toEqual(res.responseBody);
-            expect(await res.response.text()).toEqual(res.responseBody);
+            expect(await res.response.json()).toEqual(res.responseBody);
         });
     });
 
@@ -637,6 +637,17 @@ describe('JavaScript tests', () => {
             expect(res.response.url).toEqual('https://jsonplaceholder.typicode.com/posts');
             expect(res.requestApi.baseUrl).toEqual('https://jsonplaceholder');
             expect(res.requestApi.path).toEqual('.typicode.com/posts');
+            expect(await res.response.json()).toEqual(res.responseBody);
+        });
+    });
+
+    describe('Response body tests', () => {
+        test('Only text on response body tests', async () => {
+            expect.assertions(2);
+
+            const res = await api.call(apiTypes.onlyTextResponse);
+
+            expect(res.response.status).toEqual(200);
             expect(await res.response.text()).toEqual(res.responseBody);
         });
     });

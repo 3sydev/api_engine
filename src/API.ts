@@ -14,7 +14,7 @@ import {
     StackTrace,
     UseFetchResponse,
 } from './types';
-import { mergeRequestInterceptorsMethods, mergeResponseInterceptorsMethods } from './utils';
+import { mergeRequestInterceptorsMethods, mergeResponseInterceptorsMethods, secureJsonParse } from './utils';
 import { merge } from 'lodash';
 
 const defaultRequestApi: EndpointInternal = {
@@ -164,7 +164,7 @@ export default class API {
                 try {
                     //create a clone to leave the response.bodyUsed property to false, so the methods "response.text()", "response.json()", "response.arrayBuffer()", "response.formData()" and "response.blob()" can be used
                     const responseClone = response.clone();
-                    responseBody = await responseClone.text();
+                    responseBody = secureJsonParse(await responseClone.text());
                 } catch (error) {
                     console.warn('error getting response body for stack trace log:', error);
                 } finally {

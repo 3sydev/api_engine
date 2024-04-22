@@ -33,3 +33,12 @@ export const mergeResponseInterceptorsMethods: MergeResponseInterceptorsMethods 
         });
     };
 };
+
+export const secureJsonParse = (value: string): BodyInit => {
+    try {
+        const parsedValue = JSON.parse(value);
+        return parsedValue;
+    } catch (e) {
+        return value;
+    }
+};
