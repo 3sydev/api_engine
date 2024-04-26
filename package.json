@@ -1,6 +1,6 @@
 {
   "name": "@3sy/api-engine",
-  "version": "1.1.3",
+  "version": "1.1.4",
   "description": "REST API engine to simplify REST API integration in NodeJS applications.",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
