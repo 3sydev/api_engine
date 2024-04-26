@@ -256,7 +256,7 @@ export default class API {
                 const interceptorResponse = await requestApi.responseInterceptor(result);
 
                 //merge responseInterceptor result with result
-                const finalResult: CallResponseFinal = { ...result, interceptorResponse: interceptorResponse || {} };
+                const finalResult: CallResponseFinal = { ...result, interceptorResponse: interceptorResponse };
 
                 //resolve without errors
                 resolve(finalResult);
