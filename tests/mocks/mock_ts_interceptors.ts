@@ -146,6 +146,84 @@ const apiConstantsTsInterceptors: ApiConstants = {
                 });
             },
         },
+        getResourcesWithInterceptorRequestAndGlobal: {
+            path: '/posts',
+            request: {
+                method: 'GET',
+            },
+            retry: 0,
+            retryCondition: [],
+            requestInterceptor: (endpoint) => {
+                const newEndpoint = { ...endpoint, path: '/posts/2' };
+                return newEndpoint;
+            },
+        },
+        getResourcesWithInterceptorRequestAndPromiseAndGlobal: {
+            path: '/posts',
+            request: {
+                method: 'GET',
+            },
+            retry: 0,
+            retryCondition: [],
+            requestInterceptor: (endpoint) => {
+                return new Promise((resolve) => {
+                    setTimeout(() => {
+                        const newEndpoint = { ...endpoint, path: '/posts/2' };
+                        resolve(newEndpoint);
+                    }, 1000);
+                });
+            },
+        },
+        getResourcesWithInterceptorRequest: {
+            path: '/posts',
+            request: {
+                method: 'GET',
+            },
+            retry: 0,
+            retryCondition: [],
+            requestInterceptor: (endpoint) => {
+                const newEndpoint = { ...endpoint, path: '/posts/2' };
+                return newEndpoint;
+            },
+            ignoreGlobalParams: ['requestInterceptor'],
+        },
+        getResourcesWithInterceptorRequestAndPromise: {
+            path: '/posts',
+            request: {
+                method: 'GET',
+            },
+            retry: 0,
+            retryCondition: [],
+            requestInterceptor: (endpoint) => {
+                return new Promise((resolve) => {
+                    setTimeout(() => {
+                        const newEndpoint = { ...endpoint, path: '/posts/2' };
+                        resolve(newEndpoint);
+                    }, 1000);
+                });
+            },
+            ignoreGlobalParams: ['requestInterceptor'],
+        },
+        getResourcesWithInterceptorRequestAndPromiseReject: {
+            path: '/posts',
+            request: {
+                method: 'GET',
+            },
+            retry: 0,
+            retryCondition: [],
+            ignoreGlobalParams: ['requestInterceptor'],
+            requestInterceptor: (response) => {
+                return new Promise((resolve, reject) => {
+                    setTimeout(() => {
+                        try {
+                            throw new Error('Reject Promise from interceptorRequest');
+                        } catch (error) {
+                            reject(error);
+                        }
+                    }, 1000);
+                });
+            },
+        },
     },
 };
 
