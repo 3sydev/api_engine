@@ -92,7 +92,7 @@ export type CallResponseFinal = {
     response: Response;
     responseBody: BodyInit;
     retries: Retries;
-    interceptorResponse: object;
+    interceptorResponse: any;
 };
 export type StackTrace = {
     startTimestamp: string;
