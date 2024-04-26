@@ -74,56 +74,72 @@ export default class API {
     }
 
     //generate new api based on requestInterceptor
-    private generateApiBasedOnRequestInterceptor = (api: EndpointInternal): EndpointInternal => {
-        const globals = this.apiConstants.globalParams;
-        const ignoreGlobalParams: IgnoreGlobalParam[] = api.ignoreGlobalParams;
+    private generateApiBasedOnRequestInterceptor = (api: EndpointInternal): Promise<EndpointInternal> => {
+        return new Promise(async (resolve, reject) => {
+            try {
+                const globals = this.apiConstants.globalParams;
+                const ignoreGlobalParams: IgnoreGlobalParam[] = api.ignoreGlobalParams;
 
-        const newApi = {
-            ...api,
-            ...(ignoreGlobalParams.includes('requestInterceptor') ? api.requestInterceptor(api) : mergeRequestInterceptorsMethods([globals.requestInterceptor, api.requestInterceptor])(api)),
-        };
+                const newApi = {
+                    ...api,
+                    ...(ignoreGlobalParams.includes('requestInterceptor')
+                        ? await api.requestInterceptor(api)
+                        : await mergeRequestInterceptorsMethods([globals.requestInterceptor, api.requestInterceptor])(api)),
+                };
 
-        return newApi;
+                resolve(newApi);
+            } catch (error) {
+                reject(error);
+            }
+        });
     };
 
     //returns endpoint from property string as EndpointInternal type
-    private getApi = (type: string, parameters: ApiParametersInternal): EndpointInternal => {
-        const apis = this.apiConstants.endpoints;
-        const globals = this.apiConstants.globalParams;
+    private getApi = (type: string, parameters: ApiParametersInternal): Promise<EndpointInternal> => {
+        return new Promise(async (resolve, reject) => {
+            try {
+                const apis = this.apiConstants.endpoints;
+                const globals = this.apiConstants.globalParams;
 
-        const _api = apis[type];
+                const _api = apis[type];
 
-        if (!_api) throw new Error('Api type not defined');
+                if (!_api) throw new Error('Api type not defined');
 
-        //overwrite api with requestInterceptor
-        const api = this.generateApiBasedOnRequestInterceptor(_api);
+                //overwrite api with requestInterceptor
+                const api = await this.generateApiBasedOnRequestInterceptor(_api);
 
-        if (Object.keys(api.request).length === 0 && Object.keys(globals.request).length === 0) throw new Error('Request parameter not defined');
+                if (Object.keys(api.request).length === 0 && Object.keys(globals.request).length === 0) throw new Error('Request parameter not defined');
 
-        const ignoreGlobalParams: IgnoreGlobalParam[] = api.ignoreGlobalParams;
+                const ignoreGlobalParams: IgnoreGlobalParam[] = api.ignoreGlobalParams;
 
-        const parametersRequest = {
-            headers: JSON.stringify(parameters.headers) === '{}' ? undefined : parameters.headers,
-            body: JSON.stringify(parameters.body) === '{}' ? undefined : parameters.body,
-        };
+                const parametersRequest = {
+                    headers: JSON.stringify(parameters.headers) === '{}' ? undefined : parameters.headers,
+                    body: JSON.stringify(parameters.body) === '{}' ? undefined : parameters.body,
+                };
 
-        const result: EndpointInternal = {
-            baseUrl: api.baseUrl,
-            path: api.path,
-            request: ignoreGlobalParams.includes('request') ? merge({}, api.request, parametersRequest) : merge({}, globals.request, api.request, parametersRequest),
-            retry: ignoreGlobalParams.includes('retry') ? api.retry : api.retry || globals.retry || 0,
-            retryCondition: ignoreGlobalParams.includes('retryCondition') ? api.retryCondition : [...globals.retryCondition, ...api.retryCondition],
-            ignoreGlobalParams: ignoreGlobalParams,
-            stackTraceLogExtraParams: ignoreGlobalParams.includes('stackTraceLogExtraParams')
-                ? api.stackTraceLogExtraParams
-                : merge({}, globals.stackTraceLogExtraParams, api.stackTraceLogExtraParams),
-            requestInterceptor: ignoreGlobalParams.includes('requestInterceptor') ? api.requestInterceptor : mergeRequestInterceptorsMethods([globals.requestInterceptor, api.requestInterceptor]),
-            responseInterceptor: ignoreGlobalParams.includes('responseInterceptor')
-                ? api.responseInterceptor
-                : mergeResponseInterceptorsMethods([globals.responseInterceptor, api.responseInterceptor]),
-        };
+                const result: EndpointInternal = {
+                    baseUrl: api.baseUrl,
+                    path: api.path,
+                    request: ignoreGlobalParams.includes('request') ? merge({}, api.request, parametersRequest) : merge({}, globals.request, api.request, parametersRequest),
+                    retry: ignoreGlobalParams.includes('retry') ? api.retry : api.retry || globals.retry || 0,
+                    retryCondition: ignoreGlobalParams.includes('retryCondition') ? api.retryCondition : [...globals.retryCondition, ...api.retryCondition],
+                    ignoreGlobalParams: ignoreGlobalParams,
+                    stackTraceLogExtraParams: ignoreGlobalParams.includes('stackTraceLogExtraParams')
+                        ? api.stackTraceLogExtraParams
+                        : merge({}, globals.stackTraceLogExtraParams, api.stackTraceLogExtraParams),
+                    requestInterceptor: ignoreGlobalParams.includes('requestInterceptor')
+                        ? api.requestInterceptor
+                        : mergeRequestInterceptorsMethods([globals.requestInterceptor, api.requestInterceptor]),
+                    responseInterceptor: ignoreGlobalParams.includes('responseInterceptor')
+                        ? api.responseInterceptor
+                        : mergeResponseInterceptorsMethods([globals.responseInterceptor, api.responseInterceptor]),
+                };
 
-        return result;
+                resolve(result);
+            } catch (error) {
+                reject(error);
+            }
+        });
     };
 
     //generate stack trace call log
@@ -210,7 +226,7 @@ export default class API {
                 };
 
                 //endpoint got from property string as EndpointInternal type
-                const requestApi: EndpointInternal = this.getApi(type, internalParameters);
+                const requestApi: EndpointInternal = await this.getApi(type, internalParameters);
                 //url generated with path and query parameters
                 const requestUrl: string = this.generateUrl(requestApi, internalParameters);
 

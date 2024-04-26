@@ -4,7 +4,7 @@ export type ApiTypes = {
 
 export type IgnoreGlobalParam = 'request' | 'retry' | 'retryCondition' | 'stackTraceLogExtraParams' | 'requestInterceptor' | 'responseInterceptor';
 
-export type RequestInterceptor = (endpoint: Endpoint) => Endpoint;
+export type RequestInterceptor = (endpoint: Endpoint) => Endpoint | Promise<Endpoint>;
 export type ResponseInterceptor = (response: CallResponse) => object | Promise<object> | undefined | null | void;
 
 export type Endpoint = {

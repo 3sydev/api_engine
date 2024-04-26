@@ -4,14 +4,21 @@ type MergeRequestInterceptorsMethods = (methods: RequestInterceptor[]) => Reques
 type MergeResponseInterceptorsMethods = (methods: ResponseInterceptor[]) => ResponseInterceptor;
 
 export const mergeRequestInterceptorsMethods: MergeRequestInterceptorsMethods = (methods) => {
-    return (endpoint: Endpoint): Endpoint => {
-        let finalEndpoint: Endpoint = endpoint;
+    return (endpoint: Endpoint): Promise<Endpoint> => {
+        return new Promise(async (resolve, reject) => {
+            try {
+                let finalEndpoint: Endpoint = endpoint;
 
-        methods.forEach((method) => {
-            const _endpoint = method(finalEndpoint);
-            finalEndpoint = { ...finalEndpoint, ..._endpoint };
+                for (const method of methods) {
+                    const _endpoint = await method(finalEndpoint);
+                    finalEndpoint = { ...finalEndpoint, ..._endpoint };
+                }
+
+                resolve(finalEndpoint);
+            } catch (error) {
+                reject(error);
+            }
         });
-        return finalEndpoint;
     };
 };
 
