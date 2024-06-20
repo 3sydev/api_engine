@@ -146,6 +146,15 @@ const apiConstantsJs = {
             retry: 0,
             retryCondition: [],
         },
+        extraParamsResponse: {
+            path: '/posts',
+            request: {
+                method: 'GET',
+            },
+            retry: 0,
+            retryCondition: [],
+            extraParams: { firstParam: 'firstParam', secondParam: 2 },
+        },
     },
 };
 

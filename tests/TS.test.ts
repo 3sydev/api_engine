@@ -717,4 +717,15 @@ describe('TypeScript tests', () => {
             expect(await res.response.text()).toEqual(res.responseBody);
         });
     });
+
+    describe('Extra params tests', () => {
+        test('Request api extra params', async () => {
+            expect.assertions(2);
+
+            const res = await api.call(apiTypes.extraParamsResponse);
+
+            expect(res.response.status).toEqual<number>(200);
+            expect(res.requestApi.extraParams).toEqual({ firstParam: 'firstParam', secondParam: 2 });
+        });
+    });
 });
