@@ -25,6 +25,7 @@ const defaultRequestApi: EndpointInternal = {
     retryCondition: [],
     ignoreGlobalParams: [],
     stackTraceLogExtraParams: {},
+    extraParams: {},
     requestInterceptor: (endpoint: Endpoint) => endpoint,
     responseInterceptor: () => {},
 };
@@ -54,6 +55,7 @@ export default class API {
                 retryCondition: endpoint.retryCondition || [],
                 ignoreGlobalParams: endpoint.ignoreGlobalParams || [],
                 stackTraceLogExtraParams: endpoint.stackTraceLogExtraParams || {},
+                extraParams: endpoint.extraParams || {},
                 requestInterceptor: endpoint.requestInterceptor || ((endpoint: Endpoint) => endpoint),
                 responseInterceptor: endpoint.responseInterceptor || (() => {}),
             } as EndpointInternal;
@@ -127,6 +129,7 @@ export default class API {
                     stackTraceLogExtraParams: ignoreGlobalParams.includes('stackTraceLogExtraParams')
                         ? api.stackTraceLogExtraParams
                         : merge({}, globals.stackTraceLogExtraParams, api.stackTraceLogExtraParams),
+                    extraParams: api.extraParams,
                     requestInterceptor: ignoreGlobalParams.includes('requestInterceptor')
                         ? api.requestInterceptor
                         : mergeRequestInterceptorsMethods([globals.requestInterceptor, api.requestInterceptor]),

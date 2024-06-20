@@ -15,6 +15,7 @@ export type Endpoint = {
     retryCondition?: number[];
     ignoreGlobalParams?: IgnoreGlobalParam[];
     stackTraceLogExtraParams?: object;
+    extraParams?: Record<string, any>;
     requestInterceptor?: RequestInterceptor;
     responseInterceptor?: ResponseInterceptor;
 };
@@ -27,6 +28,7 @@ export type EndpointInternal = {
     retryCondition: number[];
     ignoreGlobalParams: IgnoreGlobalParam[];
     stackTraceLogExtraParams: object;
+    extraParams: Record<string, any>;
     requestInterceptor: RequestInterceptor;
     responseInterceptor: ResponseInterceptor;
 };
