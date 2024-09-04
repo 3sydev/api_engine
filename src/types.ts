@@ -127,3 +127,5 @@ export type StackTrace = {
     errorMessage: string | unknown;
     extraProperties: object;
 };
+
+export type StackTraceCallback = (stackTrace: StackTrace) => any;

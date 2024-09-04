@@ -12,6 +12,7 @@ import {
     IgnoreGlobalParam,
     PathQueryParameters,
     StackTrace,
+    StackTraceCallback,
     UseFetchResponse,
 } from './types';
 import { mergeRequestInterceptorsMethods, mergeResponseInterceptorsMethods, secureJsonParse } from './utils';
@@ -39,8 +40,10 @@ export default class API {
     private apiConstants: ApiConstantsInternal;
     private apiTypes: ApiTypes;
     private stackTraceLog: StackTrace[] = [];
+    private stackTraceLogCallback: StackTraceCallback | undefined;
 
-    constructor(apiConstants: ApiConstants) {
+    constructor(apiConstants: ApiConstants, stackTraceLogCallback?: StackTraceCallback) {
+        this.stackTraceLogCallback = stackTraceLogCallback;
         //throw Error if apiConstants is not defined
         if (!apiConstants) throw new Error('Error on API constructor: apiConstants not defined.');
         //remap endpoints as EndpointInternal type
@@ -205,6 +208,8 @@ export default class API {
                 );
                 //push stack trace call log
                 this.stackTraceLog.push(stackTrace);
+                //call stack trace call callback log
+                this.stackTraceLogCallback && this.stackTraceLogCallback(stackTrace);
             }
         });
     };

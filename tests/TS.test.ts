@@ -1,5 +1,5 @@
 import { APIEngine, ApiParameters, CallResponse } from '../src/index';
-import { Retries } from '../src/types';
+import { Retries, StackTrace, StackTraceCallback } from '../src/types';
 import apiConstantsTs from './mocks/mock_ts';
 import apiConstantsTsGlobal from './mocks/mock_ts_globals';
 import apiConstantsTsGlobalNoParams from './mocks/mock_ts_globals_no_params';
@@ -472,6 +472,33 @@ describe('TypeScript tests', () => {
                 expect(lastStackTraceLog.errorMessage).toBeDefined();
                 expect(lastStackTraceLog.extraProperties).toEqual({});
             }
+        });
+
+        test('With stackTraceLogCallback', async () => {
+            expect.assertions(11);
+
+            let stackTrace: StackTrace[] = [];
+
+            const stackTraceLogCallback: StackTraceCallback = (stackTraceLog: StackTrace) => {
+                stackTrace.push(stackTraceLog);
+            };
+
+            const api = new APIEngine(apiConstantsTsStackTrace, stackTraceLogCallback);
+            const apiTypes = api.getApiTypes();
+            const res = await api.call(apiTypes.getResources);
+
+            expect(res.response.status).toEqual<number>(200);
+            const lastStackTraceLog = stackTrace[stackTrace.length - 1];
+            expect(lastStackTraceLog.startTimestamp).toBeTruthy();
+            expect(lastStackTraceLog.endTimestamp).toBeTruthy();
+            expect(lastStackTraceLog.requestUrl).toEqual(res.response.url);
+            expect(lastStackTraceLog.requestHeaders).toEqual(res.requestApi.request.headers || {});
+            expect(lastStackTraceLog.responseHeaders).toEqual(res.response.headers);
+            expect(lastStackTraceLog.requestBody).toEqual(res.requestApi.request.body || '');
+            expect(lastStackTraceLog.responseBody).toEqual(res.responseBody);
+            expect(lastStackTraceLog.responseStatusCode).toEqual(res.response.status);
+            expect(lastStackTraceLog.errorMessage).toBeUndefined();
+            expect(lastStackTraceLog.extraProperties).toEqual({});
         });
     });
 

@@ -476,6 +476,33 @@ describe('JavaScript tests', () => {
                 expect(lastStackTraceLog.extraProperties).toEqual({});
             }
         });
+
+        test('With stackTraceLogCallback', async () => {
+            expect.assertions(11);
+
+            let stackTrace = [];
+
+            const stackTraceLogCallback = (stackTraceLog) => {
+                stackTrace.push(stackTraceLog);
+            };
+
+            const api = new APIEngine(apiConstantsJsStackTrace, stackTraceLogCallback);
+            const apiTypes = api.getApiTypes();
+            const res = await api.call(apiTypes.getResources);
+
+            expect(res.response.status).toEqual(200);
+            const lastStackTraceLog = stackTrace[stackTrace.length - 1];
+            expect(lastStackTraceLog.startTimestamp).toBeTruthy();
+            expect(lastStackTraceLog.endTimestamp).toBeTruthy();
+            expect(lastStackTraceLog.requestUrl).toEqual(res.response.url);
+            expect(lastStackTraceLog.requestHeaders).toEqual(res.requestApi.request.headers || {});
+            expect(lastStackTraceLog.responseHeaders).toEqual(res.response.headers);
+            expect(lastStackTraceLog.requestBody).toEqual(res.requestApi.request.body || '');
+            expect(lastStackTraceLog.responseBody).toEqual(res.responseBody);
+            expect(lastStackTraceLog.responseStatusCode).toEqual(res.response.status);
+            expect(lastStackTraceLog.errorMessage).toBeUndefined();
+            expect(lastStackTraceLog.extraProperties).toEqual({});
+        });
     });
 
     describe('Interceptors tests', () => {

@@ -1,13 +1,15 @@
 import API from './API';
-import { ApiConstants, ApiParameters, ApiTypes, CallResponseFinal, StackTrace } from './types';
+import { ApiConstants, ApiParameters, ApiTypes, CallResponseFinal, StackTrace, StackTraceCallback } from './types';
 
 export class APIEngine {
     private apiConstants: ApiConstants;
+    private stackTraceLogCallback: StackTraceCallback | undefined;
     private api: API;
 
-    constructor(apiConstants: ApiConstants) {
+    constructor(apiConstants: ApiConstants, stackTraceLogCallback?: StackTraceCallback) {
         this.apiConstants = apiConstants;
-        this.api = new API(this.apiConstants);
+        this.stackTraceLogCallback = stackTraceLogCallback;
+        this.api = new API(this.apiConstants, this.stackTraceLogCallback);
     }
 
     getApiTypes = (): ApiTypes => this.api.getApiTypes();
