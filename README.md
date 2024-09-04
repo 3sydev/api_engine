@@ -599,6 +599,29 @@ const stackTraceLog = api.getStackTraceLog();
 console.log(stackTraceLog);
 ```
 
+Or you can also use a callback to save the stack trace logs:
+```typescript
+// Define the stack trace log array
+const stackTraceLog: StackTrace[] = [];
+
+// Define the stackTraceCallback
+const stackTraceCallback = (_stackTraceLog: StackTrace) => {
+    stackTraceLog.push(_stackTraceLog);
+}
+
+// Initialize the API class
+const api = new API(apiConstants, stackTraceCallback);
+
+// Perform API calls
+await api.call('getResource');
+await api.call('createResource', {
+    /* parameters */
+});
+
+// Utilize log entries for analysis or debugging
+console.log(stackTraceLog);
+```
+
 By leveraging this stack trace functionality, you can effectively trace the execution flow of API calls, examine request-response details, and diagnose errors, enhancing the overall visibility and debuggability of the API integration process.
 
 ## Contributing
