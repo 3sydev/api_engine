@@ -1,9 +1,10 @@
-import { ApiConstants, ApiParameters, ApiTypes, CallResponseFinal, StackTrace } from './types';
+import { ApiConstants, ApiParameters, ApiTypes, CallResponseFinal, StackTrace, StackTraceCallback } from './types';
 export default class API {
     private apiConstants;
     private apiTypes;
     private stackTraceLog;
-    constructor(apiConstants: ApiConstants);
+    private stackTraceLogCallback;
+    constructor(apiConstants: ApiConstants, stackTraceLogCallback?: StackTraceCallback);
     private generateApiBasedOnRequestInterceptor;
     private getApi;
     private generateStackTraceCallLog;
