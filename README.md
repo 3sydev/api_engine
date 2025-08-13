@@ -549,7 +549,7 @@ These parameters are then used to construct the URL for the API call, with path 
 
 ### Per-param encoding control
 
-Each element of `pathQueryParameters` can specify an optional `encode` flag to control URL encoding. The flag defaults to `true` for backward compatibility. When `encode` is set to `false`, the value is injected into the path without applying `encodeURIComponent`.
+Each element of `pathQueryParameters` can specify an optional `encode` flag to control URL encoding. The flag defaults to `true` for backward compatibility. When `encode` is set to `false`, the value is injected into the path without applying `encodeURIComponent`. 
 
 #### Example
 
