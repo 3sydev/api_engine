@@ -829,6 +829,18 @@ describe('JavaScript tests', () => {
             expect(res.response.url).toBe('https://jsonplaceholder.typicode.com/posts?page=1');
         });
 
+        test('Null parameter in middle removed and URL clean', async () => {
+            const api = createApi('/posts?category={category}&keyword={keyword}&page={page}');
+            const res = await api.call('test', {
+                pathQueryParameters: [
+                    { name: 'category', value: 'news' },
+                    { name: 'keyword', value: null },
+                    { name: 'page', value: '1' },
+                ],
+            });
+            expect(res.response.url).toBe('https://jsonplaceholder.typicode.com/posts?category=news&page=1');
+        });
+
         test('Mixed encode true and false', async () => {
             const api = createApi('/posts?keyword={keyword}{query}');
             const res = await api.call('test', {
