@@ -280,8 +280,36 @@ export default class API {
         let newUrl = url;
 
         for (let parameter of queryParameters) {
-            newUrl = newUrl.replace(`{${parameter.name}}`, encodeURIComponent(parameter.value));
+            const placeholder = `{${parameter.name}}`;
+            if (!newUrl.includes(placeholder)) continue;
+
+            const rawValue = Array.isArray(parameter.value)
+                ? parameter.value.join(',')
+                : parameter.value == null
+                ? ''
+                : String(parameter.value);
+
+            if (rawValue.trim() === '') {
+                const regex = new RegExp(`([?&])[^?&=]*=${placeholder}(&?)`);
+                if (regex.test(newUrl)) {
+                    newUrl = newUrl.replace(regex, (match, sep, trailingAmp) => {
+                        if (sep === '?' && trailingAmp) return '?';
+                        if (sep === '&' && trailingAmp) return '&';
+                        return '';
+                    });
+                } else {
+                    newUrl = newUrl.replace(placeholder, '');
+                }
+                continue;
+            }
+
+            const shouldEncode = parameter.encode !== false;
+            const valueToInsert = shouldEncode ? encodeURIComponent(rawValue) : rawValue;
+            newUrl = newUrl.replace(placeholder, valueToInsert);
         }
+
+        newUrl = newUrl.replace(/([?&])([?&])/g, '$1');
+        newUrl = newUrl.replace(/[?&]$/g, '');
 
         return newUrl;
     };

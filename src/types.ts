@@ -73,7 +73,9 @@ export type ApiConstantsInternal = {
 
 type Parameter = {
     name: string;
-    value: string;
+    value: any;
+    /** Default true. When false, the value is injected raw without URL-encoding. */
+    encode?: boolean;
 };
 
 export type PathQueryParameters = Parameter[];

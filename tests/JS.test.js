@@ -758,4 +758,92 @@ describe('JavaScript tests', () => {
             expect(res.requestApi.extraParams).toEqual({ firstParam: 'firstParam', secondParam: 2 });
         });
     });
+
+    describe('Path query parameters encode option', () => {
+        const createApi = (path) =>
+            new APIEngine({
+                baseUrl: 'https://jsonplaceholder.typicode.com',
+                endpoints: { test: { path, request: { method: 'GET' }, retry: 0, retryCondition: [] } },
+            });
+
+        test('Default encoding when encode omitted', async () => {
+            const api = createApi('/posts{query}');
+            const res = await api.call('test', {
+                pathQueryParameters: [{ name: 'query', value: '?a=1&b=2' }],
+            });
+            expect(res.response.url).toBe('https://jsonplaceholder.typicode.com/posts%3Fa%3D1%26b%3D2');
+        });
+
+        test('Explicit encode true encodes value', async () => {
+            const api = createApi('/posts{query}');
+            const res = await api.call('test', {
+                pathQueryParameters: [{ name: 'query', value: '?a=1&b=2', encode: true }],
+            });
+            expect(res.response.url).toBe('https://jsonplaceholder.typicode.com/posts%3Fa%3D1%26b%3D2');
+        });
+
+        test('encode:false injects raw value', async () => {
+            const api = createApi('/posts{query}');
+            const res = await api.call('test', {
+                pathQueryParameters: [
+                    {
+                        name: 'query',
+                        value: '?errors=SENT&page=1&products_per_page=20',
+                        encode: false,
+                    },
+                ],
+            });
+            expect(res.response.url).toBe(
+                'https://jsonplaceholder.typicode.com/posts?errors=SENT&page=1&products_per_page=20'
+            );
+        });
+
+        test('Placeholder with empty value removed and URL clean', async () => {
+            const api = createApi('/posts?keyword={keyword}&page={page}');
+            const res = await api.call('test', {
+                pathQueryParameters: [
+                    { name: 'keyword', value: '' },
+                    { name: 'page', value: '1' },
+                ],
+            });
+            expect(res.response.url).toBe('https://jsonplaceholder.typicode.com/posts?page=1');
+        });
+
+        test('Mixed encode true and false', async () => {
+            const api = createApi('/posts?keyword={keyword}{query}');
+            const res = await api.call('test', {
+                pathQueryParameters: [
+                    { name: 'keyword', value: 'hello world' },
+                    { name: 'query', value: '&errors=SENT&page=1', encode: false },
+                ],
+            });
+            expect(res.response.url).toBe(
+                'https://jsonplaceholder.typicode.com/posts?keyword=hello%20world&errors=SENT&page=1'
+            );
+        });
+
+        test('Path already ends with ? and raw starts with ?', async () => {
+            const api = createApi('/posts?{query}');
+            const res = await api.call('test', {
+                pathQueryParameters: [{ name: 'query', value: '?a=1&b=2', encode: false }],
+            });
+            expect(res.response.url).toBe('https://jsonplaceholder.typicode.com/posts?a=1&b=2');
+        });
+
+        test('Array value with encode false', async () => {
+            const api = createApi('/posts?tags={tags}');
+            const res = await api.call('test', {
+                pathQueryParameters: [{ name: 'tags', value: ['a', 'b', 'c'], encode: false }],
+            });
+            expect(res.response.url).toBe('https://jsonplaceholder.typicode.com/posts?tags=a,b,c');
+        });
+
+        test('Parameter without placeholder is ignored', async () => {
+            const api = createApi('/posts');
+            const res = await api.call('test', {
+                pathQueryParameters: [{ name: 'missing', value: '1' }],
+            });
+            expect(res.response.url).toBe('https://jsonplaceholder.typicode.com/posts');
+        });
+    });
 });
