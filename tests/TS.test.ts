@@ -104,6 +104,26 @@ describe('TypeScript tests', () => {
             const res = await api.call(apiTypes.getUserResourcesWithCustomRoute, parameters);
             expect(res.response.status).toEqual<number>(404);
         });
+
+        test('Empty query parameter removed from URL', async () => {
+            expect.assertions(2);
+            const parameters: ApiParameters = {
+                pathQueryParameters: [{ name: 'id', value: '' }],
+            };
+            const res = await api.call(apiTypes.getUserResources, parameters);
+            expect(res.response.status).toEqual<number>(200);
+            expect(res.response.url).toEqual<string>(apiConstantsTs.baseUrl + '/posts');
+        });
+
+        test('Empty path parameter removed from URL', async () => {
+            expect.assertions(2);
+            const parameters: ApiParameters = {
+                pathQueryParameters: [{ name: 'id', value: '' }],
+            };
+            const res = await api.call(apiTypes.getResource, parameters);
+            expect(res.response.status).toEqual<number>(200);
+            expect(res.response.url).toMatch(new RegExp(`${apiConstantsTs.baseUrl}/posts/?$`));
+        });
     });
 
     describe('With headers and body REST API calls', () => {
@@ -804,6 +824,18 @@ describe('TypeScript tests', () => {
                 ],
             });
             expect(res.response.url).toBe('https://jsonplaceholder.typicode.com/posts?page=1');
+        });
+
+        test('Null parameter in middle removed and URL clean', async () => {
+            const api = createApi('/posts?category={category}&keyword={keyword}&page={page}');
+            const res = await api.call('test', {
+                pathQueryParameters: [
+                    { name: 'category', value: 'news' },
+                    { name: 'keyword', value: null },
+                    { name: 'page', value: '1' },
+                ],
+            });
+            expect(res.response.url).toBe('https://jsonplaceholder.typicode.com/posts?category=news&page=1');
         });
 
         test('Mixed encode true and false', async () => {
