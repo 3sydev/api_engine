@@ -547,6 +547,32 @@ In this example:
 
 These parameters are then used to construct the URL for the API call, with path parameters replacing placeholders in the endpoint's path, and query parameters appended to the URL.
 
+### Per-param encoding control
+
+Each element of `pathQueryParameters` can specify an optional `encode` flag to control URL encoding. The flag defaults to `true` for backward compatibility. When `encode` is set to `false`, the value is injected into the path without applying `encodeURIComponent`.
+
+#### Example
+
+```typescript
+// Previous behaviour (default encoding)
+path: '/api/search/products{queryParams}'
+serviceParams: {
+  pathQueryParameters: [
+    { name: 'queryParams', value: '?a=1&b=2' } // will be URL-encoded
+  ]
+}
+
+// With encode set to false
+path: '/api/search/products{queryParams}'
+serviceParams: {
+  pathQueryParameters: [
+    { name: 'queryParams', value: '?a=1&b=2', encode: false } // raw injection
+  ]
+}
+```
+
+Empty, undefined or null values remove the related placeholder and the library normalizes the resulting URL to avoid leftover separators. When `encode` is `false` and the value is an array, it will be serialized using `Array.prototype.join(',')` before being injected.
+
 ## Stack Trace Functionality
 
 The stack trace functionality offers a comprehensive logging mechanism for API calls, capturing essential details throughout the request-response lifecycle. This functionality creates a detailed log entry for each API interaction.
