@@ -104,6 +104,26 @@ describe('TypeScript tests', () => {
             const res = await api.call(apiTypes.getUserResourcesWithCustomRoute, parameters);
             expect(res.response.status).toEqual<number>(404);
         });
+
+        test('Empty query parameter removed from URL', async () => {
+            expect.assertions(2);
+            const parameters: ApiParameters = {
+                pathQueryParameters: [{ name: 'id', value: '' }],
+            };
+            const res = await api.call(apiTypes.getUserResources, parameters);
+            expect(res.response.status).toEqual<number>(200);
+            expect(res.response.url).toEqual<string>(apiConstantsTs.baseUrl + '/posts');
+        });
+
+        test('Empty path parameter removed from URL', async () => {
+            expect.assertions(2);
+            const parameters: ApiParameters = {
+                pathQueryParameters: [{ name: 'id', value: '' }],
+            };
+            const res = await api.call(apiTypes.getResource, parameters);
+            expect(res.response.status).toEqual<number>(200);
+            expect(res.response.url).toMatch(new RegExp(`${apiConstantsTs.baseUrl}/posts/?$`));
+        });
     });
 
     describe('With headers and body REST API calls', () => {
